@@ -10,6 +10,20 @@ window.addEventListener('load', function() {
     initAuthSystem();
 });
 
+function formatDate(date) {
+    if (!(date instanceof Date)) {
+        date = new Date(date);
+    }
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${day}.${month} ${year}, ${hours}:${minutes}`;
+}
+
 function initAuthSystem() {
     try {
         if (typeof firebase === 'undefined') {
@@ -17,7 +31,6 @@ function initAuthSystem() {
             return;
         }
 
-        // Počkáme na inicializáciu Firebase z hlavného súboru
         const checkFirebaseInterval = setInterval(() => {
             if (firebase.app && firebase.auth) {
                 clearInterval(checkFirebaseInterval);
@@ -33,27 +46,24 @@ function initAuthSystem() {
 function setupAuthListeners() {
     console.log("Nastavujem autentifikačných poslucháčov");
     
-    // Vytvoríme overlay pre prihlásenie a registráciu
     createAuthOverlay();
     
-    // Počúvame na zmeny stavu autentifikácie
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
-            // Používateľ je prihlásený
             console.log("Používateľ je prihlásený:", user.uid);
             window.authState.isLoggedIn = true;
             window.authState.userId = user.uid;
             window.authState.userEmail = user.email;
-            window.authState.userName = user.displayName || user.email;
+            window.authState.userName = user.displayName || user.email.split('@')[0];
             window.authState.isAuthReady = true;
             
-            // Skryjeme prihlasovací overlay
             hideAuthOverlay();
             
-            // Môžeme aktualizovať UI, ak je potrebné
             updateUIForLoggedUser();
+
+            const authEvent = new Event('authStateChanged');
+            window.dispatchEvent(authEvent);
         } else {
-            // Používateľ nie je prihlásený
             console.log("Používateľ nie je prihlásený");
             window.authState.isLoggedIn = false;
             window.authState.userId = null;
@@ -61,14 +71,15 @@ function setupAuthListeners() {
             window.authState.userName = null;
             window.authState.isAuthReady = true;
             
-            // Zobrazíme prihlasovací overlay
             showAuthOverlay();
+
+            const authEvent = new Event('authStateChanged');
+            window.dispatchEvent(authEvent);
         }
     });
 }
 
 function createAuthOverlay() {
-    // Vytvorenie container elementu pre autentifikačný overlay
     const authOverlay = document.createElement('div');
     authOverlay.id = 'authOverlay';
     authOverlay.style.position = 'fixed';
@@ -82,7 +93,6 @@ function createAuthOverlay() {
     authOverlay.style.alignItems = 'center';
     authOverlay.style.zIndex = '1000';
     
-    // Autentifikačný box
     const authBox = document.createElement('div');
     authBox.className = 'auth-box';
     authBox.style.backgroundColor = '#111';
@@ -93,7 +103,6 @@ function createAuthOverlay() {
     authBox.style.maxWidth = '400px';
     authBox.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.5)';
     
-    // Nadpis
     const title = document.createElement('h2');
     title.textContent = 'B&B MULTIPLAY';
     title.style.color = '#ffcc00';
@@ -101,7 +110,6 @@ function createAuthOverlay() {
     title.style.marginBottom = '20px';
     title.style.textShadow = '0 0 5px #ff6600';
     
-    // Tlačidlá pre prepínanie medzi prihlásením a registráciou
     const tabContainer = document.createElement('div');
     tabContainer.style.display = 'flex';
     tabContainer.style.marginBottom = '20px';
@@ -133,7 +141,6 @@ function createAuthOverlay() {
     tabContainer.appendChild(loginTab);
     tabContainer.appendChild(registerTab);
     
-    // Prihlasovací formulár
     const loginForm = document.createElement('div');
     loginForm.id = 'loginForm';
     
@@ -177,7 +184,6 @@ function createAuthOverlay() {
     loginForm.appendChild(loginPasswordInput);
     loginForm.appendChild(loginButton);
     
-    // Registračný formulár
     const registerForm = document.createElement('div');
     registerForm.id = 'registerForm';
     registerForm.style.display = 'none';
@@ -248,7 +254,6 @@ function createAuthOverlay() {
     registerForm.appendChild(registerConfirmPasswordInput);
     registerForm.appendChild(registerButton);
     
-    // Správa o chybe
     const errorMessage = document.createElement('div');
     errorMessage.id = 'authErrorMessage';
     errorMessage.style.color = '#ff6666';
@@ -256,25 +261,18 @@ function createAuthOverlay() {
     errorMessage.style.marginTop = '10px';
     errorMessage.style.display = 'none';
     
-    // Pridávame všetky elementy do authBox
     authBox.appendChild(title);
     authBox.appendChild(tabContainer);
     authBox.appendChild(loginForm);
     authBox.appendChild(registerForm);
     authBox.appendChild(errorMessage);
-    
-    // Pridávame authBox do authOverlay
     authOverlay.appendChild(authBox);
-    
-    // Pridávame authOverlay do body
     document.body.appendChild(authOverlay);
-    
-    // Pridávame event listenery
+
     setupAuthEvents();
 }
 
 function setupAuthEvents() {
-    // Prepínače medzi prihlásením a registráciou
     document.getElementById('loginTab').addEventListener('click', function() {
         document.getElementById('loginForm').style.display = 'block';
         document.getElementById('registerForm').style.display = 'none';
@@ -295,7 +293,6 @@ function setupAuthEvents() {
         hideErrorMessage();
     });
     
-    // Prihlásenie
     document.getElementById('loginButton').addEventListener('click', function() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
@@ -307,7 +304,6 @@ function setupAuthEvents() {
         
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                // Prihlásenie úspešné
                 console.log("Prihlásenie úspešné");
                 hideErrorMessage();
             })
@@ -333,14 +329,12 @@ function setupAuthEvents() {
             });
     });
     
-    // Registrácia
     document.getElementById('registerButton').addEventListener('click', function() {
         const name = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
         
-        // Validácia
         if (!name || !email || !password || !confirmPassword) {
             showErrorMessage("Vyplňte všetky polia");
             return;
@@ -358,24 +352,18 @@ function setupAuthEvents() {
         
         firebase.auth().createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                // Registrácia úspešná
                 console.log("Registrácia úspešná");
-                
-                // Aktualizácia profilu s menom používateľa
                 userCredential.user.updateProfile({
                     displayName: name
                 }).then(() => {
                     console.log("Profil aktualizovaný");
-                    
-                    // Uložiť dodatočné informácie o používateľovi do databázy
-                    return firebase.database().ref('users/' + userCredential.user.uid).set({
-                        username: name,
+                    return firebase.database().ref(name).set({
+                        credit: 1000,
+                        lastUpdated: formatDate(new Date()),
                         email: email,
-                        createdAt: new Date().toString(),
-                        credit: 1000 // Začiatočný kredit
+                        uid: userCredential.user.uid
                     });
                 }).then(() => {
-                    // Dáta užívateľa uložené do databázy
                     hideErrorMessage();
                 }).catch((error) => {
                     console.error("Chyba pri aktualizácii profilu:", error);
@@ -431,37 +419,195 @@ function hideAuthOverlay() {
     }
 }
 
-function updateUIForLoggedUser() {
-    // Aktualizácia UI pre prihláseného používateľa
-    // Napr. zobrazenie mena, kreditu atď.
+function showAddCreditModal() {
+    let creditModal = document.getElementById('creditModal');
+    if (creditModal) {
+        document.body.removeChild(creditModal);
+    }
     
-    // Načítanie kreditu z databázy
-    firebase.database().ref('users/' + window.authState.userId).once('value')
+    creditModal = document.createElement('div');
+    creditModal.id = 'creditModal';
+    creditModal.style.position = 'fixed';
+    creditModal.style.top = '0';
+    creditModal.style.left = '0';
+    creditModal.style.width = '100%';
+    creditModal.style.height = '100%';
+    creditModal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    creditModal.style.display = 'flex';
+    creditModal.style.justifyContent = 'center';
+    creditModal.style.alignItems = 'center';
+    creditModal.style.zIndex = '2000';
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = '#111';
+    modalContent.style.border = '2px solid #00cc00';
+    modalContent.style.borderRadius = '10px';
+    modalContent.style.padding = '20px';
+    modalContent.style.width = '250px';
+    modalContent.style.boxShadow = '0 0 15px rgba(0, 204, 0, 0.5)';
+    
+    const modalTitle = document.createElement('h3');
+    modalTitle.textContent = 'Pridať kredit';
+    modalTitle.style.color = '#00cc00';
+    modalTitle.style.textAlign = 'center';
+    modalTitle.style.marginBottom = '20px';
+    
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'X';
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '15px';
+    closeButton.style.background = 'none';
+    closeButton.style.border = 'none';
+    closeButton.style.color = 'white';
+    closeButton.style.fontSize = '18px';
+    closeButton.style.cursor = 'pointer';
+    
+    closeButton.addEventListener('click', function() {
+        document.body.removeChild(creditModal);
+    });
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexDirection = 'column';
+    buttonContainer.style.gap = '10px';
+    const creditValues = [50, 100, 200];
+    
+    for (const value of creditValues) {
+        const button = document.createElement('button');
+        button.textContent = `Pridať ${value} B&B`;
+        button.style.padding = '12px';
+        button.style.backgroundColor = '#008800';
+        button.style.color = 'white';
+        button.style.border = 'none';
+        button.style.borderRadius = '5px';
+        button.style.cursor = 'pointer';
+        button.style.fontWeight = 'bold';
+        
+        button.addEventListener('click', function() {
+            addCreditToUser(value);
+            document.body.removeChild(creditModal);
+        });
+        
+        buttonContainer.appendChild(button);
+    }
+    
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(modalTitle);
+    modalContent.appendChild(buttonContainer);
+    
+    creditModal.appendChild(modalContent);
+    document.body.appendChild(creditModal);
+}
+
+
+function addCreditToUser(amount) {
+
+    if (!window.authState.isLoggedIn || !window.authState.userName) {
+        console.error("Používateľ nie je prihlásený");
+        return;
+    }
+    
+    const newCredit = window.credit + amount;
+    window.credit = newCredit;
+    const creditElement = document.getElementById('creditDisplay');
+    if (creditElement) {
+        creditElement.textContent = `Kredit: ${window.credit} B&B`;
+    }
+
+    firebase.database().ref(window.authState.userName).once('value')
+        .then((snapshot) => {
+            const userData = snapshot.val() || {};
+            const updatedData = {
+                credit: window.credit,
+                hry: userData.hry || {},
+                email: window.authState.userEmail,
+                lastUpdated: formatDate(new Date())
+            };
+            
+            if (userData.historia_kreditov) {
+                updatedData.historia_kreditov = userData.historia_kreditov;
+            }
+            
+            return firebase.database().ref(window.authState.userName).set(updatedData);
+        })
+        .then(() => {
+            console.log(`Kredit bol úspešne zvýšený o ${amount} B&B. Nový kredit: ${window.credit} B&B`);
+            return firebase.database().ref(window.authState.userName + "/historia_kreditov/" + Date.now()).set({
+                typ: "Pridanie",
+                suma: amount,
+                novy_zostatok: window.credit,
+                datum: formatDate(new Date())
+            });
+        })
+        .then(() => {
+            console.log("História kreditu bola uložená");
+        })
+        .catch(error => {
+            console.error("Chyba pri pridávaní kreditu:", error);
+        });
+}
+
+function updateUIForLoggedUser() {
+    console.log("updateUIForLoggedUser - začiatok");
+    console.log("Meno používateľa:", window.authState.userName);
+    firebase.database().ref(window.authState.userName).once('value')
         .then((snapshot) => {
             const userData = snapshot.val();
+            console.log("Údaje používateľa z Firebase:", userData);
+            
             if (userData && userData.credit !== undefined) {
-                // Aktualizácia kreditu v hre
-                const credit = userData.credit;
-                const creditDisplay = document.getElementById('creditDisplay');
+                console.log("Načítaný kredit z Firebase:", userData.credit);
+                window.credit = userData.credit;
+                console.log("Kredit nastavený na hodnotu z Firebase:", window.credit);
                 
+                const creditDisplay = document.getElementById('creditDisplay');
                 if (creditDisplay) {
-                    creditDisplay.textContent = `Kredit: ${credit} B&B`;
+                    console.log("Aktualizujem zobrazenie kreditu na:", window.credit);
+                    creditDisplay.textContent = `Kredit: ${window.credit} B&B`;
                     
-                    // Aktualizácia globálneho stavu hry
                     if (window.slotMachineData) {
                         window.slotMachineData.userId = window.authState.userId;
+                        window.slotMachineData.userName = window.authState.userName;
                     }
                 }
+
+                window.isUserDataLoaded = true;
+                console.log("Odosielam event authStateChanged");
+                const authEvent = new Event('authStateChanged');
+                window.dispatchEvent(authEvent);
+            } else {
+                console.log("Kredit nebol nájdený v údajoch používateľa");
+                window.credit = 1000;
+                console.log("Nastavujem predvolený kredit 1000, pretože v databáze nebol nájdený");
+                
+                const creditDisplay = document.getElementById('creditDisplay');
+                if (creditDisplay) {
+                    creditDisplay.textContent = `Kredit: ${window.credit} B&B`;
+                }
+                
+                window.isUserDataLoaded = true;
+                const authEvent = new Event('authStateChanged');
+                window.dispatchEvent(authEvent);
             }
         })
         .catch((error) => {
             console.error("Chyba pri načítaní údajov o používateľovi:", error);
+            window.credit = 1000;
+            console.log("Nastavujem predvolený kredit 1000 kvôli chybe");
+            
+            const creditDisplay = document.getElementById('creditDisplay');
+            if (creditDisplay) {
+                creditDisplay.textContent = `Kredit: ${window.credit} B&B`;
+            }
+            
+            window.isUserDataLoaded = true;
+            const authEvent = new Event('authStateChanged');
+            window.dispatchEvent(authEvent);
         });
     
-    // Môžeme pridať meno používateľa do rozhrania
     const slotMachine = document.querySelector('.slot-machine');
     if (slotMachine) {
-        // Skontrolujeme, či už neexistuje element s používateľským menom
         let userNameElement = document.getElementById('userNameDisplay');
         
         if (!userNameElement) {
@@ -472,6 +618,28 @@ function updateUIForLoggedUser() {
             userNameElement.style.marginTop = '10px';
             userNameElement.style.marginRight = '10px';
             userNameElement.style.fontSize = '14px';
+            userNameElement.style.display = 'flex';
+            userNameElement.style.justifyContent = 'space-between';
+            userNameElement.style.alignItems = 'center';
+            const addCreditButton = document.createElement('button');
+            addCreditButton.textContent = 'Pridať kredit';
+            addCreditButton.style.backgroundColor = '#00aa00';
+            addCreditButton.style.color = 'white';
+            addCreditButton.style.border = 'none';
+            addCreditButton.style.borderRadius = '5px';
+            addCreditButton.style.padding = '5px 10px';
+            addCreditButton.style.cursor = 'pointer';
+            addCreditButton.style.fontWeight = 'bold';
+            addCreditButton.style.marginLeft = '10px';
+            addCreditButton.addEventListener('click', function() {
+                showAddCreditModal();
+            });
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `Hráč: ${window.authState.userName}`;
+            
+            userNameElement.appendChild(nameSpan);
+            userNameElement.appendChild(addCreditButton);
             
             const title = slotMachine.querySelector('.title');
             if (title) {
@@ -479,33 +647,27 @@ function updateUIForLoggedUser() {
             } else {
                 slotMachine.appendChild(userNameElement);
             }
+        } else {
+            userNameElement.querySelector('span').textContent = `Hráč: ${window.authState.userName}`;
         }
-        
-        userNameElement.textContent = `Hráč: ${window.authState.userName}`;
     }
     
-    // Pridáme tlačidlo na odhlásenie
     addLogoutButton();
 }
-
+    
 function addLogoutButton() {
     const slotMachine = document.querySelector('.slot-machine');
     if (!slotMachine) return;
-    
-    // Skontrolujeme, či už neexistuje logout tlačidlo
     let logoutButton = document.getElementById('logoutButton');
     
     if (!logoutButton) {
         const controlsContainer = document.querySelector('.controls');
         
         if (controlsContainer) {
-            // Vytvoríme nový container pre odhlásenie
             const logoutContainer = document.createElement('div');
             logoutContainer.style.position = 'absolute';
             logoutContainer.style.top = '10px';
             logoutContainer.style.right = '10px';
-            
-            // Vytvoríme tlačidlo
             logoutButton = document.createElement('button');
             logoutButton.id = 'logoutButton';
             logoutButton.textContent = 'Odhlásiť sa';
@@ -515,10 +677,7 @@ function addLogoutButton() {
             logoutButton.style.border = '1px solid #500';
             logoutButton.style.borderRadius = '3px';
             logoutButton.style.cursor = 'pointer';
-            
-            // Pridáme event listener
             logoutButton.addEventListener('click', function() {
-                // Uložíme aktuálny kredit do databázy pred odhlásením
                 saveUserCredit().then(() => {
                     firebase.auth().signOut()
                         .then(() => {
@@ -537,65 +696,68 @@ function addLogoutButton() {
 }
 
 function saveUserCredit() {
-    // Uloženie aktuálneho kreditu do databázy
-    if (!window.authState.isLoggedIn || !window.authState.userId) {
+    if (!window.authState || !window.authState.isLoggedIn || !window.authState.userName) {
+        console.error("Nemôžem uložiť kredit - používateľ nie je prihlásený");
         return Promise.resolve();
     }
     
-    const creditElement = document.getElementById('creditDisplay');
-    if (!creditElement) {
-        return Promise.resolve();
-    }
+    console.log("Ukladám kredit do Firebase:", window.credit);
     
-    const creditText = creditElement.textContent;
-    const match = creditText.match(/Kredit: (\d+)/);
-    
-    if (!match) {
-        return Promise.resolve();
-    }
-    
-    const credit = parseInt(match[1]);
-    
-    return firebase.database().ref('users/' + window.authState.userId).update({
-        credit: credit,
-        lastUpdated: new Date().toString()
-    });
+    return firebase.database().ref(window.authState.userName).once('value')
+        .then((snapshot) => {
+            const userData = snapshot.val() || {};
+            const updatedData = {
+                credit: window.credit,
+                hry: userData.hry || {},
+                email: window.authState.userEmail,
+                lastUpdated: formatDate(new Date())
+            };
+            
+            if (userData.historia_kreditov) {
+                updatedData.historia_kreditov = userData.historia_kreditov;
+            }
+            
+            return firebase.database().ref(window.authState.userName).set(updatedData);
+        })
+        .then(() => {
+            console.log("Kredit bol úspešne uložený:", window.credit);
+            return Promise.resolve();
+        })
+        .catch((error) => {
+            console.error("Chyba pri ukladaní kreditu:", error);
+            return Promise.reject(error);
+        });
 }
 
-// Prepíšeme funkciu recordSpin, aby zahŕňala informácie o používateľovi
-window.originalRecordSpin = window.recordSpin;
 
-window.recordSpin = function() {
-    if (!window.slotMachineData.pendingRecord) {
-        console.log("Točenie už bolo zaznamenané");
-        return;
+function setupCreditSaveInterval() {
+    console.log("Nastavujem periodické ukladanie kreditu");
+    
+    if (window.creditSaveInterval) {
+        clearInterval(window.creditSaveInterval);
     }
     
-    const spinData = {
-        timestamp: window.slotMachineData.timestamp.toString(),
-        bet: window.slotMachineData.lastBet,
-        win: window.slotMachineData.lastWin,
-        credit: getCreditAmount(),
-        userId: window.authState.isLoggedIn ? window.authState.userId : 'anonymous'
-    };
-    
-    console.log("Zaznamenávam údaje o točení:", spinData);
-    
-    // Ukladáme údaje o točení do databázy
-    firebase.database().ref("spins/" + window.slotMachineData.sessionId).push(spinData)
-        .then(function() {
-            console.log("Údaje o točení boli úspešne zaznamenané");
-            
-            // Aktualizujeme kredit používateľa v databáze po každom točení
-            if (window.authState.isLoggedIn) {
-                return saveUserCredit();
-            }
-        })
-        .catch(function(error) {
-            console.error("Chyba pri ukladaní údajov o točení:", error);
-        });
-    
-    // Označíme, že už bolo zaznamenané
-    window.slotMachineData.pendingRecord = false;
-    window.slotMachineData.recordRequested = false;
+    window.creditSaveInterval = setInterval(() => {
+        if (window.authState && window.authState.isLoggedIn && window.credit !== null) {
+            console.log("Periodické ukladanie kreditu:", window.credit);
+            saveUserCredit();
+        }
+    }, 60000);
+}
+
+window.addEventListener('authStateChanged', function() {
+    if (window.authState && window.authState.isLoggedIn) {
+        setupCreditSaveInterval();
+    } else {
+
+        if (window.creditSaveInterval) {
+            clearInterval(window.creditSaveInterval);
+        }
+    }
+});
+
+window.authHelpers = {
+    formatDate: formatDate,
+    saveUserCredit: saveUserCredit,
+    setupCreditSaveInterval: setupCreditSaveInterval
 };
