@@ -331,9 +331,11 @@
                 }
                 reelSymbols.push(reelSymbolsArray);
             }
-
+            
+            window.pendingWin = 0;
             window.credit = null;
             window.isUserDataLoaded = false;
+            window.winAnimationCancelled = false;
             let currentBet = 1;
             let winAmount = 0;
             let isSpinning = false;
@@ -864,28 +866,54 @@
                         totalWin += combo.win;
                     });
 
+                    // Nastaviť výhru do pendingWin - ale nepripočítame ju ešte ku kreditu
+                    window.pendingWin = totalWin;
+                    console.log("Nová výhra: " + totalWin + " uložená do pendingWin");
+                    
+                    // Zaznamenať výhru do Firebase
+                    if (window.recordSpinResult) {
+                        console.log("Zaznamenávam výsledok do Firebase:", totalWin);
+                        window.recordSpinResult(totalWin);
+                    }
+
+                    // Reset príznaku zrušenia animácie pred spustením novej animácie
+                    window.winAnimationCancelled = false;
+                    
+                    // Reset a začiatok animácie
                     winAmount = 0;
                     winDisplay.textContent = `Výhra: ${winAmount} B&B`;
                     winDisplay.classList.add('win-animation');
                     
                     let currentCombinationIndex = 0;
                     let cumulativeWin = 0;
-                    const totalAnimationTime = allWinningCombinations.length * 1500 + 1500;
                     
                     function showNextCombination() {
+                        // Kontrola či bola animácia zrušená
+                        if (window.winAnimationCancelled) {
+                            console.log("Animácia výhry bola prerušená, končím");
+                            return; // Okamžite prerušiť, ak bola animácia zrušená
+                        }
+                        
                         clearWinningHighlights();
                         
                         if (currentCombinationIndex >= allWinningCombinations.length) {
                             setTimeout(() => {
+                                // Opäť skontrolovať, či bola animácia medzičasom zrušená
+                                if (window.winAnimationCancelled) {
+                                    console.log("Animácia výhry bola prerušená, končím");
+                                    return;
+                                }
+                                
                                 if (!isSpinning) {
                                     clearWinningHighlights();
                                     winAmount = totalWin;
                                     winDisplay.textContent = `Výhra: ${winAmount} B&B`;
-                                    window.credit += totalWin;
-                                    updateDisplay();
-                                    if (window.recordSpinResult) {
-                                        console.log("Volám recordSpinResult s výhrou:", totalWin);
-                                        window.recordSpinResult(totalWin);
+                                    
+                                    // Pripočítať výhru ku kreditu ak sme ju ešte nepripočítali
+                                    if (window.pendingWin > 0) {
+                                        window.credit += window.pendingWin;
+                                        window.pendingWin = 0; // Vynulovať pendingWin po pripočítaní
+                                        updateDisplay();
                                     }
                                     
                                     winDisplay.classList.remove('win-animation');
@@ -913,6 +941,11 @@
                             const element = combination.elements[i].element;
                             
                             setTimeout(() => {
+                                // Kontrola či bola animácia medzičasom zrušená
+                                if (window.winAnimationCancelled) {
+                                    return;
+                                }
+                                
                                 if (element.dataset.wild === 'true' && combination.wildTargetSymbol) {
                                     transformWildSymbol(element, combination.wildTargetSymbol);
                                 }
@@ -922,13 +955,23 @@
                         }
                         
                         currentCombinationIndex++;
-                        setTimeout(showNextCombination, 1500);
+                        setTimeout(() => {
+                            // Kontrola či bola animácia medzičasom zrušená
+                            if (window.winAnimationCancelled) {
+                                return;
+                            }
+                            
+                            showNextCombination();
+                        }, 1500);
                     }
                     
                     showNextCombination();
                     
                 } else {
+                    // Žiadna výhra
+                    window.winAnimationCancelled = false;  // Reset príznaku zrušenia animácie
                     winAmount = 0;
+                    window.pendingWin = 0; // Reset pendingWin
                     winDisplay.textContent = `Výhra: ${winAmount} B&B`;
 
                     if (window.recordSpinResult) {
@@ -949,28 +992,27 @@
 
             async function startSpin() {
                 if (isSpinning) return;
+                
+                window.winAnimationCancelled = true;
                 winAmount = 0;
                 winDisplay.textContent = `Výhra: ${winAmount} B&B`;
-                
-                if (isShowingWin) {
-                    clearWinningHighlights();
-                    winDisplay.classList.remove('win-animation');
+                winDisplay.classList.remove('win-animation');
+                clearWinningHighlights();
+                isShowingWin = false;
 
-                    if (isShowingWin && winAmount > 0) {
-                        window.credit += winAmount;
-                        updateDisplay();
-
-                        if (window.slotMachineData && window.slotMachineData.recordRequested && window.slotMachineData.pendingRecord) {
-                            setTimeout(() => {
-                                console.log("Manuálne prerušenie animácie - zaznamenávam výsledok");
-                                window.recordSpinResult(winAmount);
-                            }, 100);
-                        }
-                    }
+                if (window.pendingWin > 0) {
+                    console.log("Stlačením SPIN pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0; // Vynulovať pendingWin
+                    updateDisplay();
                     
-                    isShowingWin = false;
+                    // Uložiť aktualizovaný kredit
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
                 }
                 
+                // Kontrola kreditu
                 if (window.credit < currentBet) {
                     alert("Nemáš dostatok B&B coinov!");
                     if (isAutoSpinning) {
@@ -979,12 +1021,13 @@
                     return;
                 }
                 
+                // Začiatok spinu
                 clearWinningHighlights();
                 winDisplay.classList.remove('win-animation');
                 
                 window.credit -= currentBet;
                 updateDisplay();
-  
+
                 if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
                     window.authHelpers.saveUserCredit();
                 }
@@ -1037,6 +1080,25 @@
             function startAutoSpin() {
                 if (isAutoSpinning || isSpinning) return;
                 
+                window.winAnimationCancelled = true;
+                winAmount = 0;
+                winDisplay.textContent = `Výhra: ${winAmount} B&B`;
+                winDisplay.classList.remove('win-animation');
+                clearWinningHighlights();
+                isShowingWin = false;
+                
+                if (window.pendingWin > 0) {
+                    console.log("Stlačením AUTO pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0; // Vynulovať pendingWin
+                    updateDisplay();
+                    
+                    // Uložiť aktualizovaný kredit
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                }
+                
                 if (credit < currentBet) {
                     alert("Nemáš dostatok B&B coinov na spustenie autospinu!");
                     return;
@@ -1050,10 +1112,14 @@
             }
 
             function stopAutoSpin() {
+                // Zastaviť autospin
                 isAutoSpinning = false;
                 stopAutoSpinRequested = false;
                 autoButton.textContent = "AUTO";
                 autoButton.classList.remove("stop");
+                
+                // Pri zastavení autospinu NIE je potrebné riešiť pendingWin,
+                // pretože to už robíme v event listeneri pre autoButton
             }
             
             spinButton.addEventListener('click', startSpin);
@@ -1064,6 +1130,29 @@
                         stopAutoSpinRequested = true;
                         autoButton.disabled = true;
                     } else {
+                        // RESET VÝHRY AK JE AKTÍVNA ANIMÁCIA
+                        if (isShowingWin) {
+                            winAmount = 0;
+                            winDisplay.textContent = `Výhra: ${winAmount} B&B`;
+                            
+                            // Pripočítať pendingWin - ak existuje
+                            if (window.pendingWin > 0) {
+                                console.log("Pri zastavení AUTO pripočítavam nezapočítanú výhru:", window.pendingWin);
+                                window.credit += window.pendingWin;
+                                window.pendingWin = 0; // Vynulovať pendingWin
+                                updateDisplay();
+                                
+                                // Uložiť aktualizovaný kredit
+                                if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                                    window.authHelpers.saveUserCredit();
+                                }
+                            }
+                            
+                            clearWinningHighlights();
+                            winDisplay.classList.remove('win-animation');
+                            isShowingWin = false;
+                        }
+                        
                         stopAutoSpin();
                     }
                 } else {
@@ -1073,6 +1162,27 @@
             
             betUpButton.addEventListener('click', () => {
                 if (isSpinning) return;
+                
+                // Pripočítať pendingWin ak prebieha animácia výhry
+                if (isShowingWin && window.pendingWin > 0) {
+                    winAmount = 0;
+                    winDisplay.textContent = `Výhra: ${winAmount} B&B`;
+                    
+                    console.log("Pri zmene stávky pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+                    
+                    // Uložiť aktualizovaný kredit
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    clearWinningHighlights();
+                    winDisplay.classList.remove('win-animation');
+                    isShowingWin = false;
+                }
+                
                 const currentIndex = betOptions.indexOf(currentBet);
                 if (currentIndex < betOptions.length - 1) {
                     currentBet = betOptions[currentIndex + 1];
@@ -1082,6 +1192,27 @@
 
             betDownButton.addEventListener('click', () => {
                 if (isSpinning) return;
+                
+                // Pripočítať pendingWin ak prebieha animácia výhry
+                if (isShowingWin && window.pendingWin > 0) {
+                    winAmount = 0;
+                    winDisplay.textContent = `Výhra: ${winAmount} B&B`;
+                    
+                    console.log("Pri zmene stávky pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+                    
+                    // Uložiť aktualizovaný kredit
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    clearWinningHighlights();
+                    winDisplay.classList.remove('win-animation');
+                    isShowingWin = false;
+                }
+                
                 const currentIndex = betOptions.indexOf(currentBet);
                 if (currentIndex > 0) {
                     currentBet = betOptions[currentIndex - 1];
@@ -1091,8 +1222,24 @@
             
             initializeReels();
             updateDisplay();
-        });
 
+            window.addEventListener('beforeunload', function() {
+                if (window.pendingWin > 0) {
+                    // Pripočítať pendingWin ku kreditu
+                    window.credit += window.pendingWin;
+                    
+                    // Uložiť kredit do Firebase
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    // Vynulovať pendingWin
+                    window.pendingWin = 0;
+                }
+            });
+        });
+        
     </script>
+
 </body>
 </html>
