@@ -350,25 +350,42 @@ function setupAuthEvents() {
             return;
         }
         
-        firebase.auth().createUserWithEmailAndPassword(email, password)
+        // Najprv skontrolujeme, či užívateľské meno už existuje
+        let uniqueName = name;
+        
+        firebase.database().ref().once('value')
+            .then((snapshot) => {
+                let counter = 1;
+                
+                // Ak meno existuje, pridáme k nemu číslo
+                while(snapshot.hasChild(uniqueName)) {
+                    uniqueName = name + " " + counter;
+                    counter++;
+                }
+                
+                // Teraz máme unikátne meno, môžeme vytvoriť účet
+                return firebase.auth().createUserWithEmailAndPassword(email, password);
+            })
             .then((userCredential) => {
                 console.log("Registrácia úspešná");
-                userCredential.user.updateProfile({
-                    displayName: name
-                }).then(() => {
-                    console.log("Profil aktualizovaný");
-                    return firebase.database().ref(name).set({
-                        credit: 1000,
-                        lastUpdated: formatDate(new Date()),
-                        email: email,
-                        uid: userCredential.user.uid
-                    });
-                }).then(() => {
-                    hideErrorMessage();
-                }).catch((error) => {
-                    console.error("Chyba pri aktualizácii profilu:", error);
-                    showErrorMessage("Účet bol vytvorený, ale nastala chyba pri ukladaní profilových údajov");
+                
+                return userCredential.user.updateProfile({
+                    displayName: uniqueName
                 });
+            })
+            .then(() => {
+                const user = firebase.auth().currentUser;
+                console.log("Profil aktualizovaný, unikátne meno:", uniqueName);
+                
+                return firebase.database().ref(uniqueName).set({
+                    credit: 1000,
+                    lastUpdated: formatDate(new Date()),
+                    email: email,
+                    uid: user.uid
+                });
+            })
+            .then(() => {
+                hideErrorMessage();
             })
             .catch((error) => {
                 console.error("Chyba pri registrácii:", error);
@@ -701,13 +718,15 @@ function saveUserCredit() {
         return Promise.resolve();
     }
     
-    console.log("Ukladám kredit do Firebase:", window.credit);
+    // Pripočítať aj nezapísanú výhru ak existuje
+    const totalCredit = window.credit + (window.pendingWin || 0);
+    console.log("Ukladám kredit do Firebase:", totalCredit, "(kredit:", window.credit, "pendingWin:", window.pendingWin || 0, ")");
     
     return firebase.database().ref(window.authState.userName).once('value')
         .then((snapshot) => {
             const userData = snapshot.val() || {};
             const updatedData = {
-                credit: window.credit,
+                credit: totalCredit,
                 hry: userData.hry || {},
                 email: window.authState.userEmail,
                 lastUpdated: formatDate(new Date())
@@ -720,7 +739,7 @@ function saveUserCredit() {
             return firebase.database().ref(window.authState.userName).set(updatedData);
         })
         .then(() => {
-            console.log("Kredit bol úspešne uložený:", window.credit);
+            console.log("Kredit bol úspešne uložený:", totalCredit);
             return Promise.resolve();
         })
         .catch((error) => {
