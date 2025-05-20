@@ -169,7 +169,7 @@ function recordSpin() {
         timestamp: formatDate(window.slotMachineData.timestamp),
         bet: window.slotMachineData.lastBet,
         win: window.slotMachineData.lastWin,
-        credit: window.credit
+        credit: window.credit + (window.pendingWin || 0) // Pridať aj pendingWin
     };
     
     console.log("Zaznamenávam údaje o točení:", spinData);
