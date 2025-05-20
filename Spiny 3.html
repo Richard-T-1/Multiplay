@@ -226,6 +226,135 @@
             border-radius: 3px;
             z-index: 10;
         }
+
+        @media screen and (max-width: 767px) {
+            .slot-machine {
+                max-width: 95%;
+                padding: 10px;
+            }
+            
+            .title {
+                font-size: 20px;
+                margin-bottom: 10px;
+                padding: 5px;
+            }
+            
+            .reels-container {
+                padding: 5px;
+                margin-bottom: 10px;
+            }
+            
+            .reel {
+                width: 22%;
+                height: 240px; /* Zmenšujeme výšku valcov na mobiloch */
+            }
+            
+            .symbol {
+                height: 80px; /* Zmenšujeme výšku symbolov na mobiloch */
+            }
+            
+            .symbol img {
+                max-width: 95%;
+                max-height: 95%;
+            }
+            
+            .controls {
+                padding: 8px;
+            }
+            
+            .info {
+                flex: 1;
+            }
+            
+            .win-display {
+                font-size: 16px;
+            }
+            
+            .credit-display {
+                font-size: 14px;
+            }
+            
+            .bet-amount {
+                font-size: 20px;
+            }
+            
+            .bet-button {
+                width: 25px;
+                height: 25px;
+                font-size: 14px;
+            }
+            
+            .spin-button {
+                width: 70px;
+                height: 70px;
+                font-size: 14px;
+            }
+            
+            .auto-button {
+                width: 70px;
+                height: 25px;
+                font-size: 12px;
+            }
+            
+            /* Zmenšiť medzery medzi symbolmi */
+            .symbols-strip {
+                gap: 0;
+            }
+            
+            /* Zlepšenie čitateľnosti menších textov */
+            #userNameDisplay {
+                font-size: 12px;
+            }
+            
+            #userNameDisplay button {
+                padding: 3px 6px;
+                font-size: 12px;
+            }
+            
+            #logoutButton {
+                padding: 3px 6px;
+                font-size: 12px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .reel {
+                height: 200px;
+            }
+            
+            .symbol {
+                height: 67px; /* 200px / 3 (aby sa zobrazili 3 symboly) */
+            }
+            
+            .spin-button {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .auto-button {
+                width: 60px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .info {
+                text-align: center;
+                margin-bottom: 5px;
+            }
+            
+            .bet-controls {
+                margin-bottom: 5px;
+            }
+            
+            .spin-controls {
+                flex-direction: row;
+            }
+        }
+
     </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -287,8 +416,13 @@
                 { id: 'B&B', img: 'https://richard-t-1.github.io/Multiplay/obrazky/B&B.png', value: 15, wild: true }
             ];
             
+            // Pridajte túto funkciu na začiatok vášho skriptu, aby ste detekovali mobilné zariadenia
+            function isMobileDevice() {
+                return (window.innerWidth <= 767);
+            }
+            
             const reelCount = 4;
-            const symbolHeight = 100;
+            const symbolHeight = isMobileDevice() ? 80 : 100;
             const visibleSymbols = 3;
             const symbolsPerReel = 20;
             const totalHeight = symbolsPerReel * symbolHeight;
@@ -484,7 +618,8 @@
                 const symbolsCount = stripElement.children.length;
                 const totalStripHeight = symbolsCount * symbolHeight;
                 
-                const topMargin = 1200;
+                // Upravená topMargin v závislosti od zariadenia
+                const topMargin = isMobileDevice() ? 800 : 1200;
                 
                 if (currentPosition + maxSpinDistance > -topMargin) {
                     const symbolsToAdd = Math.ceil((currentPosition + maxSpinDistance + topMargin) / symbolHeight);
@@ -1235,6 +1370,13 @@
                     
                     // Vynulovať pendingWin
                     window.pendingWin = 0;
+                }
+            });
+
+            window.addEventListener('resize', function() {
+                // Ak sa veľkosť okna zmení, reinicializujte valce
+                if (gameInitialized) {
+                    initializeReels();
                 }
             });
         });
