@@ -259,71 +259,137 @@
             }
             
             .controls {
-                padding: 8px;
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 10px;
+                padding: 10px;
             }
             
+            /* Vycentrovať informácie o výhre a kredite */
             .info {
-                flex: 1;
+                grid-row: 1;
+                text-align: center;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin-bottom: 5px;
             }
             
-            .win-display {
-                font-size: 16px;
+            /* Vycentrovať a upraviť stávku */
+            .bet-controls {
+                grid-row: 2;
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 5px;
             }
             
-            .credit-display {
-                font-size: 14px;
+            /* Vycentrovať tlačidlá */
+            .spin-controls {
+                grid-row: 3;
+                width: 100%;
+                flex-direction: row;
+                justify-content: center;
+                gap: 15px;
             }
             
-            .bet-amount {
-                font-size: 20px;
-            }
-            
-            .bet-button {
-                width: 25px;
-                height: 25px;
-                font-size: 14px;
-            }
-            
+            /* Upraviť tlačidlá */
             .spin-button {
                 width: 70px;
                 height: 70px;
-                font-size: 14px;
+                background-color: #f00;
+                color: white;
+                box-shadow: 0 0 10px #f00;
             }
             
             .auto-button {
                 width: 70px;
-                height: 25px;
-                font-size: 12px;
+                height: 30px;
+                line-height: 30px;
+                background-color: #008800;
+                color: white;
+                box-shadow: 0 0 10px #008800;
+                align-self: center;
             }
             
-            /* Zmenšiť medzery medzi symbolmi */
-            .symbols-strip {
-                gap: 0;
+            /* Zarovnať symboly v valcoch */
+            .symbol {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 0 auto;
+                padding: 0;
             }
             
-            /* Zlepšenie čitateľnosti menších textov */
+            .symbol img {
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
+                display: block;
+                margin: 0 auto;
+            }
+            
+            /* Vycentrovať B&B logo */
+            .title {
+                font-size: 18px;
+                padding: 8px;
+                text-align: center;
+                margin: 0 auto 10px auto;
+            }
+            
+            /* Upraviť informácie o hráčovi */
             #userNameDisplay {
-                font-size: 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                margin-bottom: 5px;
             }
             
-            #userNameDisplay button {
-                padding: 3px 6px;
-                font-size: 12px;
+            /* Upraviť veľkosť valcov */
+            .reel {
+                width: 23%;
+                height: 240px;
+                margin: 0 1px;
+                overflow: hidden;
             }
             
-            #logoutButton {
-                padding: 3px 6px;
-                font-size: 12px;
+            /* Zvýrazniť tlačidlá stavenia */
+            .bet-amount {
+                font-size: 20px;
+                color: #ff5555;
+                margin: 0 10px;
+            }
+            
+            .bet-buttons {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .bet-button {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+                background-color: #500;
+            }
+            
+            /* Upraviť zobrazenie výhry a kreditu */
+            .win-display, .credit-display {
+                padding: 3px 0;
+                width: 100%;
+                text-align: center;
             }
         }
 
+        /* Extra úpravy pre veľmi malé obrazovky */
         @media screen and (max-width: 480px) {
             .reel {
-                height: 200px;
+                height: 200px; 
             }
             
             .symbol {
-                height: 67px; /* 200px / 3 (aby sa zobrazili 3 symboly) */
+                height: 66px;
             }
             
             .spin-button {
@@ -333,25 +399,18 @@
             
             .auto-button {
                 width: 60px;
+                height: 25px;
+                line-height: 25px;
             }
             
             .controls {
-                flex-direction: column;
-                gap: 10px;
-                align-items: center;
+                gap: 5px;
+                padding: 8px;
             }
             
-            .info {
-                text-align: center;
-                margin-bottom: 5px;
-            }
-            
-            .bet-controls {
-                margin-bottom: 5px;
-            }
-            
-            .spin-controls {
-                flex-direction: row;
+            .title {
+                font-size: 16px;
+                padding: 5px;
             }
         }
 
