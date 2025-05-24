@@ -227,226 +227,125 @@
             z-index: 10;
         }
 
-        /* Mobilná verzia - nové optimalizované CSS */
         @media screen and (max-width: 767px) {
-            /* Základné nastavenia automatu */
-            .slot-machine {
-                max-width: 95%;
-                padding: 10px;
-            }
-            
-            /* Úprava hlavičky */
-            .title {
-                font-size: 18px;
-                margin-bottom: 10px;
-                padding: 8px;
-                text-align: center;
-            }
-            
-            /* Úprava kontajnera valcov */
-            .reels-container {
-                padding: 5px;
-                margin-bottom: 10px;
-            }
-            
-            /* Nastavenie valcov */
-            .reel {
-                width: 23%;
-                height: 240px;
-                margin: 0 1px;
-                overflow: hidden;
-            }
-            
-            /* Nastavenie symbolov - kľúčové pre správne zobrazenie */
-            .symbol {
-                height: 80px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin: 0 auto;
-                padding: 0;
-            }
-            
-            .symbol img {
-                max-width: 90%;
-                max-height: 90%;
-                object-fit: contain;
-                display: block;
-                margin: 0 auto;
-            }
-            
-            /* HLAVNÁ ZMENA - zachovanie horizontálneho rozloženia ovládacích prvkov */
-            .controls {
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                padding: 10px;
-                background-color: #111;
-                border-radius: 5px;
-            }
-            
-            /* Panel s informáciami - vľavo */
-            .info {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                justify-content: center;
-                flex: 1;
-            }
-            
-            .win-display, .credit-display {
-                padding: 2px 0;
-                text-align: left;
-                width: 100%;
-            }
-            
-            /* Ovládanie stávky - v strede */
-            .bet-controls {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                margin: 0 5px;
-            }
-            
-            .bet-amount {
-                font-size: 20px;
-                color: #ff5555;
-                margin-bottom: 5px;
-            }
-            
-            .bet-buttons {
-                display: flex;
-                gap: 8px;
-            }
-            
-            .bet-button {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
-                background-color: #500;
-            }
-            
-            /* Tlačidlá točenia - vpravo */
-            .spin-controls {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-                align-items: flex-end;
-            }
-            
-            .spin-button {
-                width: 70px;
-                height: 70px;
-                background-color: #f00;
-                color: white;
-                box-shadow: 0 0 10px #f00;
-            }
-            
-            .auto-button {
-                width: 70px;
-                height: 30px;
-                line-height: 30px;
-                background-color: #008800;
-                color: white;
-                box-shadow: 0 0 10px #008800;
-            }
-            
-            /* Používateľský panel */
+            /* Úprava hlavičky - hráč a tlačidlá */
             #userNameDisplay {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                width: 100%;
-                margin-bottom: 5px;
-                flex-wrap: wrap;
-            }
-            
-            #userNameDisplay button {
-                margin-left: 5px;
-                padding: 5px 10px;
-                font-size: 12px;
-            }
-        }
-
-        /* Extra úpravy pre veľmi malé obrazovky */
-        @media screen and (max-width: 480px) {
-            /* Zmenšenie valcov a symbolov */
-            .reel {
-                height: 200px; 
-            }
-            
-            .symbol {
-                height: 66px;
-            }
-            
-            /* Na malých obrazovkách preusporiadame ovládacie prvky vertikálne */
-            .controls {
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            /* Informácie o výhre a kredite - hore na celú šírku */
-            .info {
-                order: 1;
-                width: 100%;
-                align-items: center;
-                text-align: center;
-            }
-            
-            .win-display, .credit-display {
-                text-align: center;
-            }
-            
-            /* Stávkové ovládacie prvky - v strede na celú šírku */
-            .bet-controls {
-                order: 2;
-                width: 100%;
-                margin: 5px 0;
-            }
-            
-            /* Tlačidlá SPIN a AUTO - dole, vedľa seba */
-            .spin-controls {
-                order: 3;
-                width: 100%;
-                flex-direction: row;
-                justify-content: center;
-                gap: 20px;
-                align-items: center;
-            }
-            
-            /* Zmenšenie veľkosti tlačidiel */
-            .spin-button {
-                width: 60px;
-                height: 60px;
-                font-size: 14px;
-            }
-            
-            .auto-button {
-                width: 60px;
-                height: 25px;
-                line-height: 25px;
-                font-size: 12px;
-            }
-            
-            /* Úprava titulku */
-            .title {
-                font-size: 16px;
-                padding: 5px;
-            }
-            
-            /* Prispôsobenie používateľského panelu */
-            #userNameDisplay {
-                flex-direction: column;
-                align-items: center;
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                width: 100% !important;
+                margin: 5px 0 !important;
+                flex-wrap: wrap !important;
             }
             
             #userNameDisplay span {
-                margin-bottom: 5px;
+                margin-right: auto !important;
             }
             
             #userNameDisplay button {
-                margin: 2px 3px;
+                margin: 2px !important;
+                padding: 5px 8px !important;
+                font-size: 12px !important;
+            }
+            
+            /* Zaistiť horizontálne rozloženie ovládacích prvkov */
+            .controls {
+                display: flex !important;
+                flex-direction: row !important; 
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 10px !important;
+                gap: 5px !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            /* Panel s informáciami */
+            .info {
+                display: flex !important;
+                flex-direction: column !important;
+                text-align: left !important;
+                width: auto !important;
+                flex: 1 !important;
+                margin-bottom: 0 !important;
+                margin-right: 5px !important;
+            }
+            
+            /* Stávkové tlačidlá */
+            .bet-controls {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                margin: 0 5px !important;
+            }
+            
+            /* Tlačidlá točenia */
+            .spin-controls {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 5px !important;
+                align-items: flex-end !important;
+                width: auto !important;
+            }
+            
+            /* Centrovanie symbolov vo valcoch */
+            .symbol {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                overflow: hidden !important;
+            }
+            
+            .symbol img {
+                max-width: 90% !important;
+                max-height: 90% !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Informácie o výhre a kredite */
+            .win-display, .credit-display {
+                text-align: left !important;
+                width: 100% !important;
+            }
+        }
+
+        /* Silnejšie pravidlá pre veľmi malé obrazovky */
+        @media screen and (max-width: 480px) {
+            /* Na malých obrazovkách vertikálne rozloženie */
+            .controls {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            
+            /* Panel s informáciami hore */
+            .info {
+                width: 100% !important;
+                text-align: center !important;
+                align-items: center !important;
+                margin-bottom: 5px !important;
+            }
+            
+            /* Stávkové tlačidlá v strede */
+            .bet-controls {
+                width: 100% !important;
+                margin: 5px 0 !important;
+            }
+            
+            /* Tlačidlá točenia dole */
+            .spin-controls {
+                width: 100% !important;
+                flex-direction: row !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 20px !important;
+            }
+            
+            /* Textové informácie centrované */
+            .win-display, .credit-display {
+                text-align: center !important;
             }
         }
 
@@ -1480,78 +1379,235 @@
             const isMobile = isMobileDevice();
             const symbolHeight = isMobile ? 80 : 100;
             
-            // Centrujeme symboly vo valcoch
+            // ---- VYLEPŠENÉ CENTROVANIE SYMBOLOV ----
+            
+            // 1. Upraviť všetky symboly pre lepšie centrovanie
             document.querySelectorAll('.symbol').forEach(symbol => {
+                // Nastaviť display: flex a centrovanie
                 symbol.style.display = 'flex';
                 symbol.style.justifyContent = 'center';
                 symbol.style.alignItems = 'center';
+                symbol.style.textAlign = 'center';
+                symbol.style.overflow = 'hidden';
                 
-                // Nastavíme správnu výšku podľa zariadenia
+                // Nastaviť správnu výšku podľa zariadenia
                 symbol.style.height = symbolHeight + 'px';
                 
+                // Upraviť obrázok v symbole
                 const img = symbol.querySelector('img');
                 if (img) {
                     img.style.margin = '0 auto';
-                    img.style.maxWidth = isMobile ? '90%' : '90%';
-                    img.style.maxHeight = isMobile ? '90%' : '90%';
+                    img.style.maxWidth = '90%';
+                    img.style.maxHeight = '90%';
+                    img.style.objectFit = 'contain';
                     img.style.display = 'block';
                 }
             });
             
-            // Optimalizujeme rozloženie na mobiloch
-            if (isMobile) {
-                // Nastavenie ovládacích prvkov
-                const controls = document.querySelector('.controls');
-                if (controls) {
-                    controls.style.display = 'flex';
-                    controls.style.flexDirection = window.innerWidth <= 480 ? 'column' : 'row';
-                    
-                    // Rôzne nastavenia pre veľmi malé displeje
+            // ---- ROZLOŽENIE POUŽÍVATEĽSKÉHO ROZHRANIA ----
+            
+            // 2. Upraviť rozloženie ovládacích prvkov
+            const controls = document.querySelector('.controls');
+            if (controls) {
+                if (isMobile) {
                     if (window.innerWidth <= 480) {
-                        const info = controls.querySelector('.info');
-                        const betControls = controls.querySelector('.bet-controls');
-                        const spinControls = controls.querySelector('.spin-controls');
+                        // Veľmi malá obrazovka - vertikálne rozloženie
+                        controls.style.display = 'flex';
+                        controls.style.flexDirection = 'column';
+                        controls.style.gap = '10px';
                         
+                        // Upraviť informačný panel
+                        const info = controls.querySelector('.info');
                         if (info) {
-                            info.style.order = '1';
                             info.style.width = '100%';
                             info.style.textAlign = 'center';
                             info.style.alignItems = 'center';
+                            info.style.marginBottom = '5px';
+                            info.style.order = '1';
+                            
+                            // Nastaviť centrovanie pre texty výhry a kreditu
+                            const winDisplay = info.querySelector('.win-display');
+                            const creditDisplay = info.querySelector('.credit-display');
+                            if (winDisplay) winDisplay.style.textAlign = 'center';
+                            if (creditDisplay) creditDisplay.style.textAlign = 'center';
                         }
                         
+                        // Upraviť ovládacie prvky stávky
+                        const betControls = controls.querySelector('.bet-controls');
                         if (betControls) {
-                            betControls.style.order = '2';
                             betControls.style.width = '100%';
                             betControls.style.margin = '5px 0';
+                            betControls.style.order = '2';
                         }
                         
+                        // Upraviť tlačidlá na točenie
+                        const spinControls = controls.querySelector('.spin-controls');
                         if (spinControls) {
-                            spinControls.style.order = '3';
                             spinControls.style.width = '100%';
                             spinControls.style.flexDirection = 'row';
                             spinControls.style.justifyContent = 'center';
+                            spinControls.style.alignItems = 'center';
                             spinControls.style.gap = '20px';
-                        }
-                    }
-                }
-                
-                // Nastavenie používateľského panelu
-                const userDisplay = document.getElementById('userNameDisplay');
-                if (userDisplay) {
-                    if (window.innerWidth <= 480) {
-                        userDisplay.style.flexDirection = 'column';
-                        userDisplay.style.alignItems = 'center';
-                        
-                        const span = userDisplay.querySelector('span');
-                        if (span) {
-                            span.style.marginBottom = '5px';
+                            spinControls.style.order = '3';
                         }
                     } else {
-                        userDisplay.style.flexDirection = 'row';
-                        userDisplay.style.justifyContent = 'space-between';
+                        // Väčšia mobilná obrazovka - horizontálne rozloženie
+                        controls.style.display = 'flex';
+                        controls.style.flexDirection = 'row';
+                        controls.style.justifyContent = 'space-between';
+                        controls.style.alignItems = 'center';
+                        controls.style.flexWrap = 'nowrap';
+                        controls.style.gap = '5px';
+                        
+                        // Upraviť informačný panel
+                        const info = controls.querySelector('.info');
+                        if (info) {
+                            info.style.flex = '1';
+                            info.style.textAlign = 'left';
+                            info.style.width = 'auto';
+                            info.style.marginRight = '5px';
+                            info.style.order = '';
+                            
+                            // Nastaviť zarovnanie pre texty výhry a kreditu
+                            const winDisplay = info.querySelector('.win-display');
+                            const creditDisplay = info.querySelector('.credit-display');
+                            if (winDisplay) winDisplay.style.textAlign = 'left';
+                            if (creditDisplay) creditDisplay.style.textAlign = 'left';
+                        }
+                        
+                        // Upraviť ovládacie prvky stávky
+                        const betControls = controls.querySelector('.bet-controls');
+                        if (betControls) {
+                            betControls.style.margin = '0 5px';
+                            betControls.style.width = 'auto';
+                            betControls.style.order = '';
+                        }
+                        
+                        // Upraviť tlačidlá na točenie
+                        const spinControls = controls.querySelector('.spin-controls');
+                        if (spinControls) {
+                            spinControls.style.flexDirection = 'column';
+                            spinControls.style.alignItems = 'flex-end';
+                            spinControls.style.width = 'auto';
+                            spinControls.style.order = '';
+                        }
                     }
                 }
             }
+            
+            // 3. Upraviť panel používateľa
+            const userDisplay = document.getElementById('userNameDisplay');
+            if (userDisplay) {
+                userDisplay.style.display = 'flex';
+                userDisplay.style.justifyContent = 'space-between';
+                userDisplay.style.alignItems = 'center';
+                userDisplay.style.width = '100%';
+                userDisplay.style.margin = '5px 0';
+                
+                if (window.innerWidth <= 480) {
+                    // Na veľmi malých obrazovkách dať tlačidlá pod meno
+                    userDisplay.style.flexDirection = 'column';
+                    userDisplay.style.alignItems = 'center';
+                    
+                    const span = userDisplay.querySelector('span');
+                    if (span) {
+                        span.style.marginBottom = '5px';
+                    }
+                    
+                    // Nastaviť tlačidlá vedľa seba
+                    const buttons = userDisplay.querySelectorAll('button');
+                    let buttonContainer = userDisplay.querySelector('.button-container');
+                    
+                    if (!buttonContainer && buttons.length > 0) {
+                        buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'button-container';
+                        buttonContainer.style.display = 'flex';
+                        buttonContainer.style.gap = '10px';
+                        buttonContainer.style.justifyContent = 'center';
+                        
+                        // Presunúť tlačidlá do kontajnera
+                        buttons.forEach(button => {
+                            if (button.parentNode === userDisplay) {
+                                userDisplay.removeChild(button);
+                                buttonContainer.appendChild(button);
+                            }
+                        });
+                        
+                        userDisplay.appendChild(buttonContainer);
+                    }
+                } else {
+                    // Na väčších obrazovkách mať všetko v jednom riadku
+                    userDisplay.style.flexDirection = 'row';
+                    
+                    const span = userDisplay.querySelector('span');
+                    if (span) {
+                        span.style.marginBottom = '0';
+                        span.style.marginRight = 'auto';
+                    }
+                    
+                    // Vrátiť tlačidlá späť do hlavného kontajnera
+                    const buttonContainer = userDisplay.querySelector('.button-container');
+                    if (buttonContainer) {
+                        const buttonsInContainer = Array.from(buttonContainer.querySelectorAll('button'));
+                        buttonsInContainer.forEach(button => {
+                            buttonContainer.removeChild(button);
+                            userDisplay.appendChild(button);
+                            button.style.margin = '2px';
+                        });
+                        userDisplay.removeChild(buttonContainer);
+                    }
+                }
+            }
+        }
+
+        // Priame volanie funkcie pre okamžitú aplikáciu
+        enhanceMobileLayout();
+
+        // Opätovné volanie po zmene veľkosti okna
+        window.addEventListener('resize', function() {
+            enhanceMobileLayout();
+        });
+
+        // Volanie po inicializácii valcov s miernym oneskorením
+        if (typeof initializeReels === 'function' && initializeReels !== null) {
+            const originalInitReels = initializeReels;
+            window.initializeReels = function() {
+                originalInitReels.apply(this, arguments);
+                
+                // Viacnásobné volanie s rôznymi oneskoreniami pre lepšie výsledky
+                setTimeout(enhanceMobileLayout, 10);
+                setTimeout(enhanceMobileLayout, 100);
+                setTimeout(enhanceMobileLayout, 500);
+            };
+        }
+
+        // Volanie po točení
+        if (typeof startSpin === 'function' && startSpin !== null) {
+            const originalStartSpin = startSpin;
+            window.startSpin = function() {
+                originalStartSpin.apply(this, arguments);
+                
+                // Viacnásobné volanie s rôznymi oneskoreniami
+                setTimeout(enhanceMobileLayout, 10);
+                setTimeout(enhanceMobileLayout, 500);
+                setTimeout(enhanceMobileLayout, 1000);
+            };
+        }
+
+        // Volanie po každej aktualizácii DOM
+        const observer = new MutationObserver(function() {
+            enhanceMobileLayout();
+        });
+
+        // Pozorovanie zmien na slot-machine elemente
+        const slotMachine = document.querySelector('.slot-machine');
+        if (slotMachine) {
+            observer.observe(slotMachine, { 
+                childList: true, 
+                subtree: true,
+                attributes: true,
+                characterData: true
+            });
         }
 
         // Spustiť pri načítaní stránky
