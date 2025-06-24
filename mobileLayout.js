@@ -25,12 +25,50 @@
         return isLikelyMobile;
     }
     
+    // Premenné pre detekciu klávesnice
+    let isKeyboardOpen = false;
+    let initialViewportHeight = window.innerHeight;
+    let layoutLocked = false;
+    
+    // Detekcia virtuálnej klávesnice
+    function detectKeyboard() {
+        const currentHeight = window.innerHeight;
+        const heightDifference = initialViewportHeight - currentHeight;
+        
+        // Ak sa výška zmenila o viac ako 150px, pravdepodobne sa otvorila klávesnica
+        const keyboardThreshold = 150;
+        const keyboardDetected = heightDifference > keyboardThreshold;
+        
+        if (keyboardDetected && !isKeyboardOpen) {
+            console.log('Virtuálna klávesnica sa otvorila - blokujem layout zmeny');
+            isKeyboardOpen = true;
+            layoutLocked = true;
+        } else if (!keyboardDetected && isKeyboardOpen) {
+            console.log('Virtuálna klávesnica sa zatvorila - odblokovávam layout');
+            isKeyboardOpen = false;
+            // Počkať chvíľu pred odblokovaním pre stabilitu
+            setTimeout(() => {
+                layoutLocked = false;
+            }, 300);
+        }
+        
+        return keyboardDetected;
+    }
+    
     // Hlavná funkcia pre mobilný layout
     function enhanceMobileLayout() {
         const isMobile = isMobileDevice();
         
         if (!isMobile) {
             // Pre desktop nerobíme žiadne zmeny
+            return;
+        }
+        
+        // Kontrola či nie je klávesnica otvorená
+        detectKeyboard();
+        
+        if (layoutLocked || isKeyboardOpen) {
+            console.log('Layout je zablokovaný kvôli klávesnici - preskakujem zmeny');
             return;
         }
         
@@ -344,6 +382,11 @@
     // Nastavenie MutationObserver pre automatické sledovanie zmien
     function setupMutationObserver() {
         const observer = new MutationObserver(function(mutations) {
+            // Neaplikovať zmeny ak je klávesnica otvorená
+            if (layoutLocked || isKeyboardOpen) {
+                return;
+            }
+            
             let shouldUpdate = false;
             
             mutations.forEach(function(mutation) {
@@ -376,16 +419,52 @@
     function initializeMobileModule() {
         console.log('Inicializujem mobilný layout modul...');
         
+        // Zapamätať si počiatočnú výšku viewportu
+        initialViewportHeight = window.innerHeight;
+        
         // Okamžite aplikovať layout
         enhanceMobileLayout();
         
-        // Nastaviť event listenery
+        // Nastaviť event listenery s debouncing a kontrolou klávesnice
+        let resizeTimeout;
         window.addEventListener('resize', function() {
-            setTimeout(enhanceMobileLayout, 100);
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Kontrola či sa nezmenila výška kvôli klávesnici
+                if (!detectKeyboard() && !layoutLocked) {
+                    enhanceMobileLayout();
+                }
+            }, 100);
         });
         
         window.addEventListener('orientationchange', function() {
-            setTimeout(enhanceMobileLayout, 200);
+            setTimeout(() => {
+                // Po rotácii aktualizovať výšku a aplikovať layout
+                initialViewportHeight = window.innerHeight;
+                layoutLocked = false;
+                isKeyboardOpen = false;
+                enhanceMobileLayout();
+            }, 300);
+        });
+        
+        // Špecifické event listenery pre klávesnicu
+        window.addEventListener('focusin', function(event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                console.log('Input field focused - potenciálne sa otvorí klávesnica');
+                setTimeout(() => {
+                    detectKeyboard();
+                }, 300);
+            }
+        });
+        
+        window.addEventListener('focusout', function() {
+            console.log('Input field unfocused - klávesnica sa možno zatvorí');
+            setTimeout(() => {
+                detectKeyboard();
+                if (!isKeyboardOpen && !layoutLocked) {
+                    enhanceMobileLayout();
+                }
+            }, 300);
         });
         
         // Nastaviť hooky na herné funkcie
@@ -418,7 +497,10 @@
     
     // Spustenie aj po auth statechanged pre Firebase integráciu
     window.addEventListener('authStateChanged', function() {
-        setTimeout(enhanceMobileLayout, 100);
+        // Neaplikovať ak je klávesnica otvorená
+        if (!layoutLocked && !isKeyboardOpen) {
+            setTimeout(enhanceMobileLayout, 100);
+        }
     });
     
 })();
