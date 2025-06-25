@@ -1,5 +1,5 @@
 {
   "routes": [
-    { "src": "/", "dest": "/Spiny 3.html" }
+    { "src": "/", "dest": "/Hlavny kod.html" }
   ]
 }
