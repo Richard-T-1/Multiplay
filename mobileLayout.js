@@ -6,13 +6,15 @@
 (function() {
     'use strict';
     
+    // Premenné pre stabilizáciu layoutu
+    let layoutInitialized = false;
+    let inputFocused = false;
+    let layoutBlocked = false;
+    
     // Detekcia mobilných zariadení - vylepšená detekcia
     function isMobileDevice() {
-        // Kontrola šírky okna A touch zariadenia
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isNarrowScreen = window.innerWidth <= 767;
-        
-        // Na notebooku/desktop s úzkou obrazovkou neaplikovať mobilný layout
         const isLikelyMobile = isTouchDevice && isNarrowScreen;
         
         console.log('Device detection:', {
@@ -25,76 +27,38 @@
         return isLikelyMobile;
     }
     
-    // Premenné pre detekciu klávesnice
-    let isKeyboardOpen = false;
-    let initialViewportHeight = window.innerHeight;
-    let layoutLocked = false;
-    
-    // Detekcia virtuálnej klávesnice
-    function detectKeyboard() {
-        const currentHeight = window.innerHeight;
-        const heightDifference = initialViewportHeight - currentHeight;
-        
-        // Ak sa výška zmenila o viac ako 150px, pravdepodobne sa otvorila klávesnica
-        const keyboardThreshold = 150;
-        const keyboardDetected = heightDifference > keyboardThreshold;
-        
-        if (keyboardDetected && !isKeyboardOpen) {
-            console.log('Virtuálna klávesnica sa otvorila - blokujem layout zmeny');
-            isKeyboardOpen = true;
-            layoutLocked = true;
-        } else if (!keyboardDetected && isKeyboardOpen) {
-            console.log('Virtuálna klávesnica sa zatvorila - odblokovávam layout');
-            isKeyboardOpen = false;
-            // Počkať chvíľu pred odblokovaním pre stabilitu
-            setTimeout(() => {
-                layoutLocked = false;
-            }, 300);
-        }
-        
-        return keyboardDetected;
-    }
-    
     // Hlavná funkcia pre mobilný layout
     function enhanceMobileLayout() {
         const isMobile = isMobileDevice();
         
         if (!isMobile) {
-            // Pre desktop nerobíme žiadne zmeny
             return;
         }
         
-        // Kontrola či nie je klávesnica otvorená
-        detectKeyboard();
-        
-        if (layoutLocked || isKeyboardOpen) {
-            console.log('Layout je zablokovaný kvôli klávesnici - preskakujem zmeny');
+        // BLOKÁCIA: Ak je input focused alebo layout blokovaný
+        if (inputFocused || layoutBlocked) {
+            console.log('Layout blokovaný - preskakujem zmeny');
             return;
         }
         
         console.log('Aplikujem mobilný layout...');
         
-        // Oprava symbolov
-        optimizeSymbols();
-        
-        // Oprava valcov
-        optimizeReels();
-        
-        // Oprava kontajnera valcov  
-        optimizeReelsContainer();
-        
-        // Oprava ovládacích prvkov
-        optimizeControls();
-        
-        // Pridanie mobilných CSS pravidiel
-        addMobileCSS();
+        // Aplikovať layout len raz
+        if (!layoutInitialized) {
+            optimizeSymbols();
+            optimizeReels();
+            optimizeReelsContainer();
+            optimizeControls();
+            addMobileCSS();
+            addViewportStabilization();
+            layoutInitialized = true;
+        }
     }
     
     // Optimalizácia symbolov pre mobil
     function optimizeSymbols() {
         const symbols = document.querySelectorAll('.symbol');
         symbols.forEach(function(symbol) {
-            // Základné nastavenia symbolu
             symbol.style.display = 'flex';
             symbol.style.justifyContent = 'center';
             symbol.style.alignItems = 'center';
@@ -104,10 +68,10 @@
             symbol.style.padding = '5px';
             symbol.style.backgroundColor = '#000';
             symbol.style.boxSizing = 'border-box';
+            symbol.style.position = 'relative';
             
             const img = symbol.querySelector('img');
             if (img) {
-                // Lepšie centrovanie obrázkov
                 img.style.maxWidth = '70px';
                 img.style.maxHeight = '70px';
                 img.style.width = 'auto';
@@ -116,6 +80,10 @@
                 img.style.display = 'block';
                 img.style.margin = '0 auto';
                 img.style.verticalAlign = 'middle';
+                img.style.position = 'absolute';
+                img.style.top = '50%';
+                img.style.left = '50%';
+                img.style.transform = 'translate(-50%, -50%)';
             }
         });
     }
@@ -124,8 +92,8 @@
     function optimizeReels() {
         const reels = document.querySelectorAll('.reel');
         reels.forEach(function(reel) {
-            reel.style.width = '23%'; // Mierne zmenšenie pre lepšie rozostupy
-            reel.style.height = '240px'; // 3 symboly × 80px
+            reel.style.width = '23%';
+            reel.style.height = '240px';
             reel.style.margin = '0';
             reel.style.padding = '0';
             reel.style.border = '2px solid #500';
@@ -142,12 +110,13 @@
         if (reelsContainer) {
             reelsContainer.style.display = 'flex';
             reelsContainer.style.justifyContent = 'space-between';
-            reelsContainer.style.gap = '1%'; // Percentuálny gap pre responsívnosť
+            reelsContainer.style.gap = '1%';
             reelsContainer.style.padding = '10px';
             reelsContainer.style.marginBottom = '15px';
             reelsContainer.style.backgroundColor = '#000';
             reelsContainer.style.borderRadius = '10px';
             reelsContainer.style.border = '3px solid #500';
+            reelsContainer.style.position = 'relative';
         }
     }
     
@@ -156,12 +125,6 @@
         const controls = document.querySelector('.controls');
         if (!controls) return;
         
-        // Aplikovanie horizontálneho layoutu podobného desktop verzii
-        applyHorizontalLayout(controls);
-    }
-    
-    // Horizontálne rozloženie ovládania (podobné desktop verzii)
-    function applyHorizontalLayout(controls) {
         controls.style.display = 'flex';
         controls.style.flexDirection = 'row';
         controls.style.justifyContent = 'space-between';
@@ -170,6 +133,7 @@
         controls.style.padding = '10px';
         controls.style.backgroundColor = '#111';
         controls.style.borderRadius = '5px';
+        controls.style.position = 'relative';
         
         // Informácie vľavo
         const info = controls.querySelector('.info');
@@ -181,7 +145,6 @@
             info.style.alignItems = 'flex-start';
             info.style.minWidth = '120px';
             
-            // Styling pre win display
             const winDisplay = info.querySelector('.win-display');
             if (winDisplay) {
                 winDisplay.style.fontSize = '16px';
@@ -189,7 +152,6 @@
                 winDisplay.style.color = '#fff';
             }
             
-            // Styling pre credit display
             const creditDisplay = info.querySelector('.credit-display');
             if (creditDisplay) {
                 creditDisplay.style.fontSize = '14px';
@@ -205,7 +167,6 @@
             betControls.style.alignItems = 'center';
             betControls.style.minWidth = '80px';
             
-            // Styling pre bet amount
             const betAmount = betControls.querySelector('.bet-amount');
             if (betAmount) {
                 betAmount.style.fontSize = '20px';
@@ -213,7 +174,6 @@
                 betAmount.style.marginBottom = '5px';
             }
             
-            // Styling pre bet buttons
             const betButtons = betControls.querySelector('.bet-buttons');
             if (betButtons) {
                 betButtons.style.display = 'flex';
@@ -228,16 +188,15 @@
             }
         }
         
-        // Tlačidlá SPIN a AUTO vpravo - ODDELENE
+        // Tlačidlá SPIN a AUTO vpravo
         const spinControls = controls.querySelector('.spin-controls');
         if (spinControls) {
             spinControls.style.display = 'flex';
             spinControls.style.flexDirection = 'column';
-            spinControls.style.gap = '15px'; // Väčší gap pre lepšie oddelenie
+            spinControls.style.gap = '15px';
             spinControls.style.alignItems = 'center';
             spinControls.style.minWidth = '90px';
             
-            // Styling pre spin button
             const spinButton = spinControls.querySelector('#spinButton');
             if (spinButton) {
                 spinButton.style.width = '70px';
@@ -252,7 +211,6 @@
                 spinButton.style.boxShadow = '0 0 10px #f00';
             }
             
-            // Styling pre auto button
             const autoButton = spinControls.querySelector('#autoButton');
             if (autoButton) {
                 autoButton.style.width = '70px';
@@ -269,9 +227,65 @@
         }
     }
     
+    // Pridanie stabilizačných CSS pravidiel
+    function addViewportStabilization() {
+        if (document.getElementById('viewport-stabilization')) {
+            return;
+        }
+        
+        const style = document.createElement('style');
+        style.id = 'viewport-stabilization';
+        style.textContent = `
+            /* Stabilizácia viewportu pre iOS Safari */
+            html {
+                height: 100%;
+                height: -webkit-fill-available;
+                overflow: hidden;
+            }
+            
+            body {
+                min-height: 100vh;
+                min-height: -webkit-fill-available;
+                position: fixed;
+                width: 100%;
+                top: 0;
+                left: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .slot-machine {
+                position: relative !important;
+                min-height: auto !important;
+            }
+            
+            .reels-container {
+                position: relative !important;
+                height: 240px !important;
+            }
+            
+            .reel {
+                position: relative !important;
+                height: 240px !important;
+            }
+            
+            .symbols-strip {
+                position: absolute !important;
+                will-change: transform !important;
+            }
+            
+            .symbol {
+                position: relative !important;
+                height: 80px !important;
+                flex-shrink: 0 !important;
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+    
     // Pridanie mobilných CSS pravidiel
     function addMobileCSS() {
-        // Kontrola či už neexistuje mobilný CSS
         if (document.getElementById('mobile-css')) {
             return;
         }
@@ -286,6 +300,7 @@
                     margin: 0 !important;
                     padding: 15px !important;
                     box-sizing: border-box !important;
+                    position: relative !important;
                 }
                 
                 .title {
@@ -296,11 +311,15 @@
                 
                 .reels-container {
                     margin-bottom: 15px !important;
+                    height: 240px !important;
+                    position: relative !important;
                 }
                 
                 .reel {
                     border: 2px solid #500 !important;
                     border-radius: 5px !important;
+                    height: 240px !important;
+                    position: relative !important;
                 }
                 
                 .symbol {
@@ -310,17 +329,24 @@
                     justify-content: center !important;
                     padding: 5px !important;
                     box-sizing: border-box !important;
+                    position: relative !important;
+                    flex-shrink: 0 !important;
                 }
                 
                 .symbol img {
                     max-width: 70px !important;
                     max-height: 70px !important;
                     object-fit: contain !important;
+                    position: absolute !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
                 }
                 
                 .controls {
                     flex-wrap: nowrap !important;
                     gap: 10px !important;
+                    position: relative !important;
                 }
                 
                 .spin-controls {
@@ -356,122 +382,70 @@
         document.head.appendChild(style);
     }
     
-    // Hookovanie herných funkcií pre mobilný layout
-    function hookGameFunctions() {
-        // Hook na initializeReels
-        if (window.initializeReels) {
-            const originalInitializeReels = window.initializeReels;
-            window.initializeReels = function() {
-                const result = originalInitializeReels.apply(this, arguments);
-                setTimeout(enhanceMobileLayout, 50);
-                return result;
-            };
-        }
+    // Blokovanie layout zmien pri focus na input
+    function setupInputFocusBlocking() {
+        // Blokovať pri focus na akýkoľvek input/textarea
+        document.addEventListener('focusin', function(event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.type === 'number') {
+                console.log('Input focused - blokujem layout zmeny');
+                inputFocused = true;
+                layoutBlocked = true;
+            }
+        }, true);
         
-        // Hook na startSpin  
-        if (window.startSpin) {
-            const originalStartSpin = window.startSpin;
-            window.startSpin = function() {
-                const result = originalStartSpin.apply(this, arguments);
-                setTimeout(enhanceMobileLayout, 50);
-                return result;
-            };
-        }
+        // Odblokovať pri blur
+        document.addEventListener('focusout', function(event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.type === 'number') {
+                console.log('Input unfocused - čakám pred odblokovaním');
+                inputFocused = false;
+                // Počkať dlhšie pred odblokovaním
+                setTimeout(() => {
+                    layoutBlocked = false;
+                    console.log('Layout odblokovaný');
+                }, 1000);
+            }
+        }, true);
     }
     
-    // Nastavenie MutationObserver pre automatické sledovanie zmien
-    function setupMutationObserver() {
-        const observer = new MutationObserver(function(mutations) {
-            // Neaplikovať zmeny ak je klávesnica otvorená
-            if (layoutLocked || isKeyboardOpen) {
-                return;
-            }
-            
-            let shouldUpdate = false;
-            
-            mutations.forEach(function(mutation) {
-                // Aktualizovať len ak sa zmenili elementy týkajúce sa hry
-                if (mutation.target.classList && 
-                   (mutation.target.classList.contains('slot-machine') ||
-                    mutation.target.classList.contains('reel') ||
-                    mutation.target.classList.contains('controls'))) {
-                    shouldUpdate = true;
-                }
-            });
-            
-            if (shouldUpdate) {
-                enhanceMobileLayout();
-            }
-        });
+    // Úplne zablokovať resize eventy počas input focus
+    function setupResizeBlocking() {
+        let originalAddEventListener = window.addEventListener;
         
-        // Sledovanie zmien na hlavnom elemente hry
-        const slotMachine = document.querySelector('.slot-machine');
-        if (slotMachine) {
-            observer.observe(slotMachine, { 
-                childList: true, 
-                subtree: true,
-                attributes: true
-            });
-        }
+        window.addEventListener = function(type, listener, options) {
+            if (type === 'resize') {
+                const wrappedListener = function(event) {
+                    if (!inputFocused && !layoutBlocked) {
+                        listener.call(this, event);
+                    } else {
+                        console.log('Resize event blokovaný kvôli input focus');
+                    }
+                };
+                return originalAddEventListener.call(this, type, wrappedListener, options);
+            }
+            return originalAddEventListener.call(this, type, listener, options);
+        };
     }
     
     // Inicializácia mobilného modulu
     function initializeMobileModule() {
         console.log('Inicializujem mobilný layout modul...');
         
-        // Zapamätať si počiatočnú výšku viewportu
-        initialViewportHeight = window.innerHeight;
+        // Najprv zablokovať input focus a resize eventy
+        setupInputFocusBlocking();
+        setupResizeBlocking();
         
-        // Okamžite aplikovať layout
+        // Aplikovať layout
         enhanceMobileLayout();
         
-        // Nastaviť event listenery s debouncing a kontrolou klávesnice
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                // Kontrola či sa nezmenila výška kvôli klávesnici
-                if (!detectKeyboard() && !layoutLocked) {
-                    enhanceMobileLayout();
-                }
-            }, 100);
-        });
-        
+        // Minimálne event listenery
         window.addEventListener('orientationchange', function() {
-            setTimeout(() => {
-                // Po rotácii aktualizovať výšku a aplikovať layout
-                initialViewportHeight = window.innerHeight;
-                layoutLocked = false;
-                isKeyboardOpen = false;
-                enhanceMobileLayout();
-            }, 300);
-        });
-        
-        // Špecifické event listenery pre klávesnicu
-        window.addEventListener('focusin', function(event) {
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-                console.log('Input field focused - potenciálne sa otvorí klávesnica');
+            if (!inputFocused && !layoutBlocked) {
                 setTimeout(() => {
-                    detectKeyboard();
-                }, 300);
+                    layoutInitialized = false;
+                    enhanceMobileLayout();
+                }, 500);
             }
         });
-        
-        window.addEventListener('focusout', function() {
-            console.log('Input field unfocused - klávesnica sa možno zatvorí');
-            setTimeout(() => {
-                detectKeyboard();
-                if (!isKeyboardOpen && !layoutLocked) {
-                    enhanceMobileLayout();
-                }
-            }, 300);
-        });
-        
-        // Nastaviť hooky na herné funkcie
-        setTimeout(hookGameFunctions, 100);
-        
-        // Nastaviť mutation observer
-        setTimeout(setupMutationObserver, 200);
         
         console.log('Mobilný layout modul inicializovaný');
     }
@@ -480,6 +454,8 @@
     window.mobileLayout = {
         enhance: enhanceMobileLayout,
         isMobile: isMobileDevice,
+        blockLayout: function() { layoutBlocked = true; },
+        unblockLayout: function() { layoutBlocked = false; },
         optimize: {
             symbols: optimizeSymbols,
             reels: optimizeReels,
@@ -494,13 +470,5 @@
     } else {
         initializeMobileModule();
     }
-    
-    // Spustenie aj po auth statechanged pre Firebase integráciu
-    window.addEventListener('authStateChanged', function() {
-        // Neaplikovať ak je klávesnica otvorená
-        if (!layoutLocked && !isKeyboardOpen) {
-            setTimeout(enhanceMobileLayout, 100);
-        }
-    });
     
 })();
