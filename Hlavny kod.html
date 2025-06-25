@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B&B Multiplay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+        .slot-machine {
+            width: 100%;
+            max-width: 600px;
+            background: linear-gradient(#800, #c00);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+        .title {
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 0 0 5px #ff6600;
+            font-size: 24px;
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 10px;
+            border: 2px solid #ffcc00;
+        }
+        .reels-container {
+            display: flex;
+            justify-content: space-between;
+            background-color: #000;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 3px solid #500;
+        }
+        .reel {
+            width: 22%;
+            height: 300px;
+            overflow: hidden;
+            position: relative;
+            background-color: #111;
+            border: 2px solid #500;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .symbols-strip {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            transform: translateY(0);
+            transition: none;
+            will-change: transform;
+        }
+        .symbol {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+        .symbol img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #111;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .info {
+            display: flex;
+            flex-direction: column;
+        }
+        .win-display {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .credit-display {
+            font-size: 16px;
+        }
+        .spin-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .spin-button {
+            width: 80px;
+            height: 80px;
+            background-color: #f00;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #f00;
+            transition: all 0.3s;
+        }
+        .spin-button:hover {
+            background-color: #ff3333;
+            transform: scale(1.05);
+        }
+        .spin-button:disabled {
+            background-color: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .auto-button {
+            width: 80px;
+            height: 30px;
+            background-color: #008800;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #008800;
+            transition: all 0.3s;
+        }
+        .auto-button:hover {
+            background-color: #00aa00;
+            transform: scale(1.05);
+        }
+        .auto-button:disabled {
+            background-color: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .auto-button.stop {
+            background-color: #880000;
+            box-shadow: 0 0 10px #880000;
+        }
+        .auto-button.stop:hover {
+            background-color: #aa0000;
+        }
+        .bet-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bet-amount {
+            font-size: 24px;
+            color: #f55;
+            margin-bottom: 5px;
+        }
+        .bet-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .bet-button {
+            background-color: #500;
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .bet-button:hover {
+            background-color: #800;
+        }
+        .win-animation {
+            animation: winPulse 1s infinite;
+        }
+        @keyframes winPulse {
+            0% { color: #f55; }
+            50% { color: #ff0; scale: 1.1; }
+            100% { color: #f55; }
+        }
+        .wild-symbol {
+            animation: wildPulse 2s infinite;
+        }
+        @keyframes wildPulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.3); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .winning-symbol {
+            position: relative;
+        }
+        .winning-symbol::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 3px solid gold;
+            box-shadow: 0 0 8px gold;
+            pointer-events: none;
+            border-radius: 3px;
+        }
+        .wild-transformed {
+            transition: transform 0.3s;
+        }
+        .wild-transformed::before {
+            content: 'WILD';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background-color: rgba(255, 215, 0, 0.7);
+            color: black;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            z-index: 10;
+        }
+
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script src="firebaseIntegration.js"></script>
+    <script src="firebaseAuth.js"></script>
+    <script src="withdrawal.js"></script>
+    <script src="mobileLayout.js"></script>
+    <script src="rtpManager.js"></script>
+
+<head>
+
+<body>
+    <div class="slot-machine">
+        <div class="title">B&B MULTIPLAY</div>
+        
+        <div class="reels-container">
+            <div class="reel" id="reel1">
+                <div class="symbols-strip" id="symbols1"></div>
+            </div>
+            <div class="reel" id="reel2">
+                <div class="symbols-strip" id="symbols2"></div>
+            </div>
+            <div class="reel" id="reel3">
+                <div class="symbols-strip" id="symbols3"></div>
+            </div>
+            <div class="reel" id="reel4">
+                <div class="symbols-strip" id="symbols4"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="info">
+                <div class="win-display" id="winDisplay">Výhra: 0 B&B</div>
+                <div class="credit-display" id="creditDisplay">Načítavam kredit...</div>
+            </div>
+            
+            <div class="bet-controls">
+                <div class="bet-amount" id="betDisplay">10 B&B</div>
+                <div class="bet-buttons">
+                    <button class="bet-button" id="betDown">-</button>
+                    <button class="bet-button" id="betUp">+</button>
+                </div>
+            </div>
+            
+            <div class="spin-controls">
+                <button class="spin-button" id="spinButton">SPIN</button>
+                <button class="auto-button" id="autoButton">AUTO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            window.symbols = [
+                { id: 'orange', img: 'https://richard-t-1.github.io/Multiplay/obrazky/orange.jpg', value: 0.5 },
+                { id: 'plum', img: 'https://richard-t-1.github.io/Multiplay/obrazky/plum.jpg', value: 0.5 },
+                { id: 'lemon', img: 'https://richard-t-1.github.io/Multiplay/obrazky/lemon.jpg', value: 1 },
+                { id: 'cherry', img: 'https://richard-t-1.github.io/Multiplay/obrazky/cherry.jpg', value: 1 },
+                { id: 'grape', img: 'https://richard-t-1.github.io/Multiplay/obrazky/grape.jpg', value: 2 },
+                { id: 'bar', img: 'https://richard-t-1.github.io/Multiplay/obrazky/bar.jpg', value: 3 },
+                { id: 'melon', img: 'https://richard-t-1.github.io/Multiplay/obrazky/melon.jpg', value: 5 },
+                { id: 'seven', img: 'https://richard-t-1.github.io/Multiplay/obrazky/seven.jpg', value: 7 },
+                { id: 'B&B', img: 'https://richard-t-1.github.io/Multiplay/obrazky/B&B.png', value: 10, wild: true }
+            ];
+            
+            
+            window.reelCount = 4;
+            window.symbolHeight = window.mobileLayout.isMobile() ? 80 : 100;
+            window.visibleSymbols = 3;
+            window.symbolsPerReel = 20;
+            window.totalHeight = window.symbolsPerReel * window.symbolHeight;
+            
+            window.symbolWeights = {
+                'orange': 30,
+                'plum': 30,
+                'lemon': 25,
+                'cherry': 25,
+                'grape': 20,
+                'melon': 15,
+                'bar': 15,
+                'seven': 10,
+                'B&B': 2
+            };
+
+            function getRandomSymbol() {
+                let totalWeight = 0;
+                for (const id in symbolWeights) {
+                    totalWeight += symbolWeights[id];
+                }
+                
+                let random = Math.random() * totalWeight;
+                let weightSum = 0;
+                
+                for (const symbol of symbols) {
+                    weightSum += symbolWeights[symbol.id];
+                    if (random < weightSum) {
+                        return symbol;
+                    }
+                }
+                
+                return symbols[0];
+            }
+
+            const reelSymbols = [];
+            for (let i = 0; i < reelCount; i++) {
+                const reelSymbolsArray = [];
+                for (let j = 0; j < symbolsPerReel; j++) {
+                    reelSymbolsArray.push(getRandomSymbol());
+                }
+                reelSymbols.push(reelSymbolsArray);
+            }
+            
+            window.pendingWin = 0;
+            window.credit = null;
+            window.isUserDataLoaded = false;
+            window.winAnimationCancelled = false;
+            window.currentBet = 10;
+            window.winAmount = 0;
+            window.isSpinning = false;
+            window.isAutoSpinning = false;
+            window.isShowingWin = false;
+            let stopAutoSpinRequested = false;
+            let gameInitialized = false;
+            
+            const spinButton = document.getElementById('spinButton');
+            const autoButton = document.getElementById('autoButton');
+            const betUpButton = document.getElementById('betUp');
+            const betDownButton = document.getElementById('betDown');
+            const betDisplay = document.getElementById('betDisplay');
+            const winDisplay = document.getElementById('winDisplay');
+            const creditDisplay = document.getElementById('creditDisplay');
+            const betOptions = [10, 20, 50, 100, 200];
+            
+            function disableControls() {
+                spinButton.disabled = true;
+                autoButton.disabled = true;
+                betUpButton.disabled = true;
+                betDownButton.disabled = true;
+            }
+            
+            function enableControls() {
+                spinButton.disabled = false;
+                autoButton.disabled = false;
+                betUpButton.disabled = false;
+                betDownButton.disabled = false;
+            }
+            
+            disableControls();
+            
+            function checkUserDataLoaded() {
+                if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                    window.authHelpers.saveUserCredit();
+                    const checkInterval = setInterval(() => {
+                        if (window.credit !== null) {
+                            clearInterval(checkInterval);
+                            window.isUserDataLoaded = true;
+                            enableControls();
+                            updateDisplay();
+                            
+                            if (!gameInitialized) {
+                                initializeReels();
+                                gameInitialized = true;
+                            }
+                        }
+                    }, 100);
+                } else {
+                    window.credit = 5000;
+                    window.isUserDataLoaded = true;
+                    updateDisplay();
+                    enableControls();
+                    
+                    if (!gameInitialized) {
+                        initializeReels();
+                        gameInitialized = true;
+                    }
+                }
+            }
+            
+            window.addEventListener('authStateChanged', function() {
+                checkUserDataLoaded();
+            });
+            
+            setTimeout(checkUserDataLoaded, 500);
+
+            function updateDisplay() {
+                if (window.credit !== null) {
+                    creditDisplay.textContent = `Kredit: ${window.credit} B&B`;
+                } else {
+                    creditDisplay.textContent = "Načítavam kredit...";
+                }
+                
+                betDisplay.textContent = `${window.currentBet} B&B`;
+            }
+
+            function createSymbolElement(symbol) {
+                const symbolDiv = document.createElement('div');
+                symbolDiv.className = 'symbol';
+                symbolDiv.dataset.symbolId = symbol.id;
+                symbolDiv.dataset.wild = symbol.wild ? 'true' : 'false';
+                
+                const img = document.createElement('img');
+                img.src = symbol.img;
+                img.alt = symbol.id;
+                
+                if (symbol.id === 'B&B') {
+                    img.classList.add('wild-symbol');
+                }
+                
+                symbolDiv.appendChild(img);
+                return symbolDiv;
+            }
+
+            function addSymbolsToTop(stripElement, reelIndex, count) {
+                const fragment = document.createDocumentFragment();
+                
+                for (let i = 0; i < count; i++) {
+                    const randomSymbolIndex = Math.floor(Math.random() * symbolsPerReel);
+                    const symbol = reelSymbols[reelIndex][randomSymbolIndex];
+                    const symbolElement = createSymbolElement(symbol);
+                    fragment.appendChild(symbolElement);
+                }
+                
+                if (stripElement.firstChild) {
+                    stripElement.insertBefore(fragment, stripElement.firstChild);
+                } else {
+                    stripElement.appendChild(fragment);
+                }
+                
+                return count * symbolHeight;
+            }
+
+            function initializeReels() {
+                for (let reelIndex = 0; reelIndex < reelCount; reelIndex++) {
+                    const stripElement = document.getElementById(`symbols${reelIndex + 1}`);
+                    stripElement.innerHTML = '';
+                    
+                    for (let repeat = 0; repeat < 2; repeat++) {
+                        for (let symbolIndex = 0; symbolIndex < symbolsPerReel; symbolIndex++) {
+                            const symbolElement = createSymbolElement(reelSymbols[reelIndex][symbolIndex]);
+                            stripElement.appendChild(symbolElement);
+                        }
+                    }
+                    
+                    const initialOffset = Math.floor(totalHeight / 2) + (Math.random() * symbolHeight);
+                    stripElement.style.transform = `translateY(-${initialOffset}px)`;
+                }
+            }
+
+            function prepareReelForSpin(reelIndex) {
+                const stripElement = document.getElementById(`symbols${reelIndex + 1}`);
+                
+                let currentPosition = 0;
+                const transformValue = stripElement.style.transform;
+                if (transformValue) {
+                    const match = transformValue.match(/translateY\((-?\d+)px\)/);
+                    if (match) {
+                        currentPosition = parseInt(match[1]);
+                    }
+                }
+                
+                const maxSpinDistance = 30 * symbolHeight;
+                const symbolsCount = stripElement.children.length;
+                const totalStripHeight = symbolsCount * symbolHeight;
+                const topMargin = window.mobileLayout.isMobile() ? 800 : 1200;
+                
+                if (currentPosition + maxSpinDistance > -topMargin) {
+                    const symbolsToAdd = Math.ceil((currentPosition + maxSpinDistance + topMargin) / symbolHeight);
+                    
+                    const addedHeight = addSymbolsToTop(stripElement, reelIndex, symbolsToAdd);
+                    
+                    stripElement.style.transition = 'none';
+                    stripElement.style.transform = `translateY(${currentPosition - addedHeight}px)`;
+                    
+                    stripElement.offsetHeight;
+                }
+                
+                return stripElement;
+            }
+            
+        
+        function spinReel(reelIndex, duration) {
+                return new Promise(resolve => {
+                    const stripElement = prepareReelForSpin(reelIndex);
+                    
+                    let currentPosition = 0;
+                    const transformValue = stripElement.style.transform;
+                    if (transformValue) {
+                        const match = transformValue.match(/translateY\((-?\d+)px\)/);
+                        if (match) {
+                            currentPosition = parseInt(match[1]);
+                        }
+                    }
+                    
+                    const symbolsToSpin = 10 + Math.floor(Math.random() * 15);
+                    const spinDistance = symbolsToSpin * symbolHeight;
+                    
+                    const targetPosition = currentPosition + spinDistance;
+                    
+                    stripElement.style.transition = `transform ${duration}s cubic-bezier(0.05, 0.9, 0.1, 1.0)`;
+                    stripElement.style.transform = `translateY(${targetPosition}px)`;
+                    
+                    setTimeout(() => {
+                        resolve();
+                    }, duration * 1000);
+                });
+            }
+            
+            function clearWinningHighlights() {
+                document.querySelectorAll('.winning-symbol').forEach(element => {
+                    element.classList.remove('winning-symbol');
+                });
+                
+                document.querySelectorAll('.wild-transformed').forEach(element => {
+                    resetWildSymbol(element);
+                });
+            }
+            
+            function transformWildSymbol(wildElement, targetSymbolId) {
+                if (!wildElement || wildElement.dataset.symbolId !== 'B&B') return;
+                
+                const img = wildElement.querySelector('img');
+                const targetSymbol = symbols.find(s => s.id === targetSymbolId);
+                
+                if (!img || !targetSymbol) return;
+                
+                wildElement.classList.add('wild-transformed');
+                wildElement.dataset.originalSymbolId = wildElement.dataset.symbolId;
+                wildElement.dataset.symbolId = targetSymbolId;
+                wildElement.dataset.transformedTo = targetSymbolId;
+                
+                const originalSrc = img.src;
+                wildElement.dataset.originalSrc = originalSrc;
+                
+                img.src = targetSymbol.img;
+                img.alt = targetSymbol.id;
+                img.classList.remove('wild-symbol');
+            }
+            
+            function resetWildSymbol(wildElement) {
+                if (!wildElement || !wildElement.classList.contains('wild-transformed')) return;
+                
+                const img = wildElement.querySelector('img');
+                if (!img) return;
+                
+                wildElement.classList.remove('wild-transformed');
+                wildElement.dataset.symbolId = wildElement.dataset.originalSymbolId || 'B&B';
+                
+                img.src = wildElement.dataset.originalSrc || 'Obrazky/B&B.png';
+                img.alt = 'B&B';
+                img.classList.add('wild-symbol');
+                
+                delete wildElement.dataset.transformedTo;
+                delete wildElement.dataset.originalSymbolId;
+                delete wildElement.dataset.originalSrc;
+            }
+            
+            function getVisibleSymbolsForReel(reelIndex) {
+                const stripElement = document.getElementById(`symbols${reelIndex + 1}`);
+                const reelElement = document.getElementById(`reel${reelIndex + 1}`);
+                
+                let currentPosition = 0;
+                const transformValue = stripElement.style.transform;
+                if (transformValue) {
+                    const match = transformValue.match(/translateY\((-?\d+)px\)/);
+                    if (match) {
+                        currentPosition = parseInt(match[1]);
+                    }
+                }
+                
+                const symbols = Array.from(stripElement.children);
+                
+                const reelTop = -currentPosition;
+                const reelBottom = reelTop + reelElement.clientHeight;
+                
+                const visibleSymbols = [];
+                
+                let currentSymbolTop = 0;
+                
+                for (const symbol of symbols) {
+                    const symbolBottom = currentSymbolTop + symbolHeight;
+                    
+                    if (currentSymbolTop < reelBottom && symbolBottom > reelTop) {
+                        const topVisibility = Math.max(0, Math.min(symbolHeight, reelBottom - currentSymbolTop));
+                        const bottomVisibility = Math.max(0, Math.min(symbolHeight, symbolBottom - reelTop));
+                        const visibility = (topVisibility + bottomVisibility) / (2 * symbolHeight);
+                        
+                        visibleSymbols.push({
+                            element: symbol,
+                            visibility: visibility,
+                            symbolId: symbol.dataset.symbolId,
+                            position: Math.floor((currentSymbolTop - reelTop) / symbolHeight),
+                            isWild: symbol.dataset.wild === 'true'
+                        });
+                    }
+                    
+                    currentSymbolTop += symbolHeight;
+                }
+                
+                visibleSymbols.sort((a, b) => b.visibility - a.visibility);
+                
+                return visibleSymbols;
+            }
+            
+            function findPotentialWildCombinations(reelsVisibleSymbols) {
+                const potentialCombinations = [];
+                const allSymbolTypes = symbols.filter(s => !s.wild).map(s => s.id);
+                
+                const wildcardPositions = [];
+                for (let reelIndex = 0; reelIndex < reelCount; reelIndex++) {
+                    const wildcardsOnReel = reelsVisibleSymbols[reelIndex].filter(s => s.isWild);
+                    if (wildcardsOnReel.length > 0) {
+                        wildcardPositions.push({
+                            reelIndex: reelIndex,
+                            wildcards: wildcardsOnReel
+                        });
+                    }
+                }
+                
+                if (wildcardPositions.length === 0) return [];
+                
+                for (const symbolId of allSymbolTypes) {
+                    const substitutedReels = [...reelsVisibleSymbols];
+                    
+                    for (const wildcardPos of wildcardPositions) {
+                        const reelIndex = wildcardPos.reelIndex;
+                        const modifiedReelSymbols = [...substitutedReels[reelIndex]];
+                        
+                        for (const wildcard of wildcardPos.wildcards) {
+                            const wildcardIndex = modifiedReelSymbols.findIndex(s => 
+                                s.element === wildcard.element);
+                            
+                            if (wildcardIndex !== -1) {
+                                const modifiedWildcard = { ...modifiedReelSymbols[wildcardIndex] };
+                                modifiedWildcard.symbolId = symbolId;
+                                modifiedWildcard.originalSymbolId = 'B&B';
+                                modifiedWildcard.isWildTransformed = true;
+                                modifiedReelSymbols[wildcardIndex] = modifiedWildcard;
+                            }
+                        }
+                        
+                        substitutedReels[reelIndex] = modifiedReelSymbols;
+                    }
+                    
+                    const combinations = findWinningCombinations(substitutedReels, true);
+                    if (combinations.length > 0) {
+                        potentialCombinations.push({
+                            targetSymbolId: symbolId,
+                            combinations: combinations,
+                            wildcardPositions: wildcardPositions
+                        });
+                    }
+                }
+                
+                return potentialCombinations;
+            }
+
+            function findWinningCombinations(reelsVisibleSymbols, isWildCheck = false) {
+                if (reelsVisibleSymbols.some(symbols => symbols.length === 0)) {
+                    return [];
+                }
+                
+                const winningCombinations = [];
+                const excludedThreeReelCombinations = new Set();
+
+                for (const symbol1 of reelsVisibleSymbols[0]) {
+                    const symbolId = symbol1.symbolId;
+                    
+                    const matchingSymbols2 = reelsVisibleSymbols[1].filter(s => s.symbolId === symbolId);
+                    
+                    for (const symbol2 of matchingSymbols2) {
+                        const matchingSymbols3 = reelsVisibleSymbols[2].filter(s => s.symbolId === symbolId);
+                        
+                        for (const symbol3 of matchingSymbols3) {
+                            const winningSymbol = symbols.find(s => s.id === symbolId);
+                            if (!winningSymbol) continue;
+                            
+                            const baseWin = winningSymbol.value * window.currentBet;
+                            const baseElements = [symbol1, symbol2, symbol3];
+                            const hasWild = baseElements.some(el => 
+                                el.isWildTransformed || el.originalSymbolId === 'B&B' || 
+                                (el.element && el.element.dataset && el.element.dataset.wild === 'true'));
+                            
+                            const matchingSymbols4 = reelsVisibleSymbols[3].filter(s => s.symbolId === symbolId);
+                            
+                            for (const symbol4 of matchingSymbols4) {
+                                const combinationElements = [...baseElements, symbol4];
+                                const hasWild4 = hasWild || 
+                                    symbol4.isWildTransformed || 
+                                    symbol4.originalSymbolId === 'B&B' || 
+                                    (symbol4.element && symbol4.element.dataset && symbol4.element.dataset.wild === 'true');
+                                
+                                const win = hasWild4 ? baseWin * 4 : baseWin * 2;
+                                
+                                const combinationKey = `${symbol1.position || 0}-${symbol2.position || 0}-${symbol3.position || 0}-${symbol4.position || 0}`;
+                                
+                                winningCombinations.push({
+                                    elements: combinationElements,
+                                    win: win,
+                                    symbolId: symbolId,
+                                    key: combinationKey,
+                                    hasWild: hasWild4,
+                                    wildTargetSymbol: symbolId
+                                });
+                                
+                                const threeReelKey = `${symbol1.position || 0}-${symbol2.position || 0}-${symbol3.position || 0}`;
+                                excludedThreeReelCombinations.add(threeReelKey);
+                            }
+                            
+                            const wildSymbols4 = reelsVisibleSymbols[3].filter(s => 
+                                (s.isWild || (s.element && s.element.dataset && s.element.dataset.wild === 'true')) &&
+                                s.symbolId !== symbolId
+                            );
+                            
+                            for (const wildSymbol of wildSymbols4) {
+
+                                const transformedWild = { ...wildSymbol };
+                                transformedWild.symbolId = symbolId;
+                                transformedWild.originalSymbolId = 'B&B';
+                                transformedWild.isWildTransformed = true;
+                                
+                                const combinationElements = [...baseElements, transformedWild];
+                                const hasWild4 = true;
+                                
+                                const win = baseWin * 4;
+                                
+                                const combinationKey = `${symbol1.position || 0}-${symbol2.position || 0}-${symbol3.position || 0}-${wildSymbol.position || 0}`;
+                                
+                                winningCombinations.push({
+                                    elements: combinationElements,
+                                    win: win,
+                                    symbolId: symbolId,
+                                    key: combinationKey,
+                                    hasWild: hasWild4,
+                                    wildTargetSymbol: symbolId
+                                });
+                                
+                                const threeReelKey = `${symbol1.position || 0}-${symbol2.position || 0}-${symbol3.position || 0}`;
+                                excludedThreeReelCombinations.add(threeReelKey);
+                            }
+                        }
+                    }
+                }
+
+                for (const symbol1 of reelsVisibleSymbols[0]) {
+                    const symbolId = symbol1.symbolId;
+                    
+                    const matchingSymbols2 = reelsVisibleSymbols[1].filter(s => s.symbolId === symbolId);
+                    
+                    for (const symbol2 of matchingSymbols2) {
+                        const matchingSymbols3 = reelsVisibleSymbols[2].filter(s => s.symbolId === symbolId);
+                        
+                        for (const symbol3 of matchingSymbols3) {
+                            const combinationKey = `${symbol1.position || 0}-${symbol2.position || 0}-${symbol3.position || 0}`;
+                            
+                            if (excludedThreeReelCombinations.has(combinationKey)) continue;
+                            
+                            const winningSymbol = symbols.find(s => s.id === symbolId);
+                            if (!winningSymbol) continue;
+                            
+                            const baseWin = winningSymbol.value * window.currentBet;
+                            const baseElements = [symbol1, symbol2, symbol3];
+                            const hasWild = baseElements.some(el => 
+                                el.isWildTransformed || el.originalSymbolId === 'B&B' || 
+                                (el.element && el.element.dataset && el.element.dataset.wild === 'true'));
+
+                            const win = hasWild ? baseWin * 2 : baseWin;
+                            
+                            winningCombinations.push({
+                                elements: baseElements,
+                                win: win,
+                                symbolId: symbolId,
+                                key: combinationKey,
+                                hasWild: hasWild,
+                                wildTargetSymbol: symbolId
+                            });
+                        }
+                    }
+                }
+                
+                winningCombinations.sort((a, b) => {
+                    const symbolA = symbols.find(s => s.id === a.symbolId);
+                    const symbolB = symbols.find(s => s.id === b.symbolId);
+                    const valueA = symbolA ? symbolA.value : 0;
+                    const valueB = symbolB ? symbolB.value : 0;
+                    return valueB - valueA;
+                });
+                
+                return winningCombinations;
+            }
+
+            function checkWin() {
+                const reelsVisibleSymbols = [];
+                for (let reelIndex = 0; reelIndex < reelCount; reelIndex++) {
+                    reelsVisibleSymbols.push(getVisibleSymbolsForReel(reelIndex));
+                }
+                
+                let allWinningCombinations = findWinningCombinations(reelsVisibleSymbols);
+                const wildCombinations = findPotentialWildCombinations(reelsVisibleSymbols);
+                
+                for (const wildComb of wildCombinations) {
+                    for (const combination of wildComb.combinations) {
+                        if (!allWinningCombinations.some(c => c.key === combination.key)) {
+                            combination.wildTargetSymbol = wildComb.targetSymbolId;
+                            allWinningCombinations.push(combination);
+                        }
+                    }
+                }
+
+                allWinningCombinations = allWinningCombinations.filter((combination, index, self) => 
+                    index === self.findIndex((c) => c.key === combination.key)
+                );
+
+                allWinningCombinations.sort((a, b) => b.win - a.win);
+                
+                if (allWinningCombinations.length > 0) {
+                    window.isShowingWin = true;
+                    let totalWin = 0;
+                    allWinningCombinations.forEach(combo => {
+                        totalWin += combo.win;
+                    });
+
+                    if (window.rtpManager) {
+                        console.log(`Pôvodná výhra: ${totalWin} B&B`);
+                        totalWin = window.rtpManager.adjustWinAmount(totalWin, window.currentBet);
+                        console.log(`Finálna výhra po RTP: ${totalWin} B&B`);
+                    }
+
+                    window.pendingWin = totalWin;
+                    console.log("Nová výhra: " + totalWin + " uložená do pendingWin");
+
+                    if (window.recordSpinResult) {
+                        console.log("Zaznamenávam výsledok do Firebase:", totalWin);
+                        window.recordSpinResult(totalWin);
+                    }
+
+                    window.winAnimationCancelled = false;
+                    window.winAmount = 0;
+                    winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                    winDisplay.classList.add('win-animation');
+                    
+                    let currentCombinationIndex = 0;
+                    let cumulativeWin = 0;
+                    
+                    function showNextCombination() {
+                        if (window.winAnimationCancelled) {
+                            console.log("Animácia výhry bola prerušená, končím");
+                            return;
+                        }
+                        
+                        clearWinningHighlights();
+                        
+                        if (currentCombinationIndex >= allWinningCombinations.length) {
+                            setTimeout(() => {
+                                if (window.winAnimationCancelled) {
+                                    console.log("Animácia výhry bola prerušená, končím");
+                                    return;
+                                }
+                                
+                                if (!window.isSpinning) {
+                                    clearWinningHighlights();
+                                    window.winAmount = totalWin;
+                                    winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                                    
+                                    if (window.pendingWin > 0) {
+                                        window.credit += window.pendingWin;
+                                        window.pendingWin = 0;
+                                        updateDisplay();
+                                    }
+                                    
+                                    winDisplay.classList.remove('win-animation');
+                                    window.isShowingWin = false;
+                                    
+                                    if (window.isAutoSpinning && !stopAutoSpinRequested && credit >= window.currentBet) {
+                                        setTimeout(() => {
+                                            startSpin();
+                                        }, 500);
+                                    } else if (stopAutoSpinRequested) {
+                                        stopAutoSpin();
+                                        stopAutoSpinRequested = false;
+                                    }
+                                }
+                            }, 1500);
+                            return;
+                        }
+                        
+                        const combination = allWinningCombinations[currentCombinationIndex];
+                        cumulativeWin += combination.win;
+                        window.winAmount = cumulativeWin;
+                        winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                        
+                        for (let i = 0; i < combination.elements.length; i++) {
+                            const element = combination.elements[i].element;
+                            
+                            setTimeout(() => {
+                                if (window.winAnimationCancelled) {
+                                    return;
+                                }
+                                
+                                if (element.dataset.wild === 'true' && combination.wildTargetSymbol) {
+                                    transformWildSymbol(element, combination.wildTargetSymbol);
+                                }
+                                
+                                element.classList.add('winning-symbol');
+                            }, i * 200);
+                        }
+                        
+                        currentCombinationIndex++;
+                        setTimeout(() => {
+                            if (window.winAnimationCancelled) {
+                                return;
+                            }
+                            
+                            showNextCombination();
+                        }, 1500);
+                    }
+                    
+                    showNextCombination();
+                    
+                } else {
+
+                    if (window.rtpManager) {
+                        console.log(`Prehra - stávka: ${window.currentBet} B&B`);
+                        window.rtpManager.adjustWinAmount(0, window.currentBet);
+                    }
+                    
+                    window.winAnimationCancelled = false;
+                    window.winAmount = 0;
+                    window.pendingWin = 0;
+                    winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+
+                    if (window.recordSpinResult) {
+                        console.log("Volám recordSpinResult s nulovou výhrou");
+                        window.recordSpinResult(0);
+                    }
+                    
+                    if (window.isAutoSpinning && !stopAutoSpinRequested && credit >= window.currentBet) {
+                        setTimeout(() => {
+                            startSpin();
+                        }, 500);
+                    } else if (stopAutoSpinRequested) {
+                        stopAutoSpin();
+                        stopAutoSpinRequested = false;
+                    }
+                }
+            }
+
+            async function startSpin() {
+                if (window.isSpinning) return;
+                
+                window.winAnimationCancelled = true;
+                window.winAmount = 0;
+                winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                winDisplay.classList.remove('win-animation');
+                clearWinningHighlights();
+                window.isShowingWin = false;
+
+                if (window.pendingWin > 0) {
+                    console.log("Stlačením SPIN pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+                    
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                }
+                
+                if (window.credit < window.currentBet) {
+                    alert("Nemáš dostatok B&B coinov!");
+                    if (window.isAutoSpinning) {
+                        stopAutoSpin();
+                    }
+                    return;
+                }
+                
+                clearWinningHighlights();
+                winDisplay.classList.remove('win-animation');
+                
+                window.credit -= window.currentBet;
+                updateDisplay();
+
+                if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                    window.authHelpers.saveUserCredit();
+                }
+                
+                window.isSpinning = true;
+                spinButton.disabled = true;
+                betUpButton.disabled = true;
+                betDownButton.disabled = true;
+                
+                if (!window.isAutoSpinning) {
+                    autoButton.disabled = true;
+                }
+
+                if (window.slotMachineData) {
+                    window.slotMachineData.lastBet = window.currentBet;
+                    window.slotMachineData.timestamp = new Date();
+                    window.slotMachineData.pendingRecord = true;
+                    window.slotMachineData.recordRequested = false;
+                }
+                
+                const spinPromises = [];
+                
+                const duration = 3.5;
+                
+                for (let reelIndex = 0; reelIndex < reelCount; reelIndex++) {
+                    const delay = reelIndex * 200;
+                    
+                    setTimeout(() => {
+                        const spinPromise = spinReel(reelIndex, duration);
+                        spinPromises.push(spinPromise);
+                    }, delay);
+                }
+                
+                const totalSpinTime = duration * 1000 + ((reelCount - 1) * 200) + 300;
+                
+                setTimeout(() => {
+                    checkWin();
+                    
+                    window.isSpinning = false;
+                    spinButton.disabled = false;
+                    betUpButton.disabled = false;
+                    betDownButton.disabled = false;
+
+                    if (!window.isAutoSpinning || stopAutoSpinRequested) {
+                        autoButton.disabled = false;
+                    }
+                }, totalSpinTime);
+            }
+            
+            function startAutoSpin() {
+                if (window.isAutoSpinning || window.isSpinning) return;
+                
+                window.winAnimationCancelled = true;
+                window.winAmount = 0;
+                winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                winDisplay.classList.remove('win-animation');
+                clearWinningHighlights();
+                window.isShowingWin = false;
+                
+                if (window.pendingWin > 0) {
+                    console.log("Stlačením AUTO pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+                    
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                }
+                
+                if (credit < window.currentBet) {
+                    alert("Nemáš dostatok B&B coinov na spustenie autospinu!");
+                    return;
+                }
+                
+                window.isAutoSpinning = true;
+                autoButton.textContent = "STOP";
+                autoButton.classList.add("stop");
+                
+                startSpin();
+            }
+
+            function stopAutoSpin() {
+                window.isAutoSpinning = false;
+                stopAutoSpinRequested = false;
+                autoButton.textContent = "AUTO";
+                autoButton.classList.remove("stop");
+                
+            }
+            
+            spinButton.addEventListener('click', startSpin);
+            
+            autoButton.addEventListener('click', () => {
+                if (window.isAutoSpinning) {
+                    if (window.isSpinning) {
+                        stopAutoSpinRequested = true;
+                        autoButton.disabled = true;
+                    } else {
+                        if (window.isShowingWin) {
+                            window.winAmount = 0;
+                            winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+
+                            if (window.pendingWin > 0) {
+                                console.log("Pri zastavení AUTO pripočítavam nezapočítanú výhru:", window.pendingWin);
+                                window.credit += window.pendingWin;
+                                window.pendingWin = 0;
+                                updateDisplay();
+
+                                if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                                    window.authHelpers.saveUserCredit();
+                                }
+                            }
+                            
+                            clearWinningHighlights();
+                            winDisplay.classList.remove('win-animation');
+                            window.isShowingWin = false;
+                        }
+                        
+                        stopAutoSpin();
+                    }
+                } else {
+                    startAutoSpin();
+                }
+            });
+            
+            betUpButton.addEventListener('click', () => {
+                if (window.isSpinning) return;
+
+                if (window.isShowingWin && window.pendingWin > 0) {
+                    window.winAmount = 0;
+                    winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                    
+                    console.log("Pri zmene stávky pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    clearWinningHighlights();
+                    winDisplay.classList.remove('win-animation');
+                    window.isShowingWin = false;
+                }
+                
+                const currentIndex = betOptions.indexOf(window.currentBet);
+                if (currentIndex < betOptions.length - 1) {
+                    window.currentBet = betOptions[currentIndex + 1];
+                    betDisplay.textContent = `${window.currentBet} B&B`;
+                }
+            });
+
+            betDownButton.addEventListener('click', () => {
+                if (window.isSpinning) return;
+                if (window.isShowingWin && window.pendingWin > 0) {
+                    window.winAmount = 0;
+                    winDisplay.textContent = `Výhra: ${window.winAmount} B&B`;
+                    
+                    console.log("Pri zmene stávky pripočítavam nezapočítanú výhru:", window.pendingWin);
+                    window.credit += window.pendingWin;
+                    window.pendingWin = 0;
+                    updateDisplay();
+
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    clearWinningHighlights();
+                    winDisplay.classList.remove('win-animation');
+                    window.isShowingWin = false;
+                }
+                
+                const currentIndex = betOptions.indexOf(window.currentBet);
+                if (currentIndex > 0) {
+                    window.currentBet = betOptions[currentIndex - 1];
+                    betDisplay.textContent = `${window.currentBet} B&B`;
+                }
+            });
+            
+            initializeReels();
+            updateDisplay();
+
+            window.addEventListener('beforeunload', function() {
+                if (window.pendingWin > 0) {
+                    window.credit += window.pendingWin;
+                    if (window.authState && window.authState.isLoggedIn && window.authHelpers && window.authHelpers.saveUserCredit) {
+                        window.authHelpers.saveUserCredit();
+                    }
+                    
+                    window.pendingWin = 0;
+                }
+            });
+        });
+        
+    </script>
+
+</body>
+</html>
